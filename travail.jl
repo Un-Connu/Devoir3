@@ -154,7 +154,7 @@ isinfectious(agent::Agent) = agent.infectious
 
 ishealthy(agent::Agent) = !isinfectious(agent)
 
-isvaccinated(agent::Agent) = 0  ## Sélectionner les agents vaccinés
+isvaccinated(agent::Agent) = agent.vaccinated  ## Sélectionner les agents vaccinés
 
 # On peut maintenant définir une fonction pour prendre uniquement les agents qui
 # sont infectieux dans une population. Pour que ce soit clair, nous allons créer
@@ -163,7 +163,7 @@ isvaccinated(agent::Agent) = 0  ## Sélectionner les agents vaccinés
 const Population = Vector{Agent}
 infectious(pop::Population) = filter(isinfectious, pop)
 healthy(pop::Population) = filter(ishealthy, pop)
-vaccinated(pop::Population) = filter() ## Ajouter un filtre qui permet de sélectionner les individues vaccinés dans la population
+vaccinated(pop::Population) = filter(isvaccinated, pop)
 
 # Nous allons enfin écrire une fonction pour trouver l'ensemble des agents d'une
 # population qui sont dans la même cellule qu'un agent:
@@ -183,7 +183,7 @@ end
 
 Base.show(io::IO, ::MIME"text/plain", p::Population) = print(io, "Une population avec $(length(p)) agents")
 
-# Et on génère notre population initiale avec une taille de 3750 individus:
+# Et on génère notre population initiale avec une taille de n individus:
 
 n = 3750
 population = Population(L, n)
@@ -266,7 +266,7 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     ## Store population size
     S[tick] = length(healthy(population))
     I[tick] = length(infectious(population))
-
+    #R[tick] = length(vaccinated(population))
 end
 
 # ## Analyse des résultats
@@ -296,7 +296,7 @@ current_figure()
 # individus. Pour ceci, nous devons prendre le contenu de `events`, et vérifier
 # combien de fois chaque individu est représenté dans le champ `from`:
 
-infxn_by_uuid = countmap([infections.from for infections in events]);
+infxn_by_uuid = countmap([infections.from for infections in infections]);
 
 # La commande `countmap` renvoie un dictionnaire, qui associe chaque UUID au
 # nombre de fois ou il apparaît:
@@ -323,8 +323,8 @@ f
 # l'épidémie. Pour ceci, nous allons extraire l'information sur le temps et la
 # position de chaque infection:
 
-t = [infections.time for infections in events];
-pos = [(infections.x, infections.y) for infections in events];
+t = [infections.time for infections in infections];
+pos = [(infections.x, infections.y) for infections in infections];
 
 #
 
