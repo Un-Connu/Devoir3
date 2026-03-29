@@ -31,6 +31,10 @@
 import Random
 Random.seed!(123456)
 using CairoMakie
+CairoMakie.activate!(px_per_unit=6.0)
+using StatsBase
+import UUIDs
+UUIDs.uuid4()
 
 # ## Inclure du code
 
@@ -62,17 +66,8 @@ end
 # Nous allons simuler le comportement d'une épidémie, qui se transmet par
 # contact direct, et qui entraîne la mort après un intervale de temps fixe.
 
-using CairoMakie
-CairoMakie.activate!(px_per_unit=6.0)
-using StatsBase
-import Random
-
 # Puisque nous allons identifier des agents, nous utiliserons des UUIDs pour
 # leur donner un indentifiant unique:
-
-import UUIDs
-UUIDs.uuid4()
-
 # ## Création des types
 
 # Le premier type que nous avons besoin de créer est un agent. Les agents se
@@ -82,9 +77,10 @@ UUIDs.uuid4()
 Base.@kwdef mutable struct Agent
     x::Int64 = 0
     y::Int64 = 0
-    clock::Int64 = 21
+    clock_death::Int64 = 21
+    clock_vaccine::Int64 = 2
     infectious::Bool = false
-   # vaccination::Bool = false ## ERROR: invalid redefinition of constant Main.Agent
+    vaccination::Bool = false
     id::UUIDs.UUID = UUIDs.uuid4()
 end
 
@@ -163,7 +159,7 @@ isvaccinated(agent::Agent) = agent.vaccinated  ## Sélectionner les agents vacci
 const Population = Vector{Agent}
 infectious(pop::Population) = filter(isinfectious, pop)
 healthy(pop::Population) = filter(ishealthy, pop)
-vaccinated(pop::Population) = filter(isvaccinated, pop)
+vaccinated(pop::Population) = filter(isvaccination, pop)
 
 # Nous allons enfin écrire une fonction pour trouver l'ensemble des agents d'une
 # population qui sont dans la même cellule qu'un agent:
@@ -227,9 +223,30 @@ end
 infections = InfectionEvent[]
 vaccinations  = VaccinationEvent[]
 
+# Création d'une fonction qui gère les effets des évènements de vaccinations sur les agents et le budget
+
+"""
+    vaccin(Agent::Agent, budget::Int64, cout_vaccin::Int64, maxlength::Int64)
+
+Lorqu'un vaccin est administré a un agent, le cout du vaccin est considéré dans le budget alloué. Le vaccin prend un certain temps avant d'agir et s'il réussit à faire effet avant que l'Agent ne meurt, l'agent devient imuniser jusqu'à la fin de la simulation.
+"""
+function vaccin(Agent::Agent, budget::Int64, cout_vaccin::Int64, maxlength::Int64)
+    Agent.clock_vaccine += -1
+    budget = budget - cout_vaccin
+    if Agent.clock_vaccine <= 0
+        Agent.clock_vaccine = maxlength
+    end
+    return()
+end
+
 # Notez qu'on a contraint nos vecteurs `infections` et 'vaccinations' a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` et 'VaccinationEvent' sont immutables.
 
+# Il y a un budget a respecter afin de pouvoir administrer des vaccins et des tests, qui ont chacun un prix respectif
+
+budget = 21_000
+cout_vaccin = 17
+cout_test = 4
 # ## Simulation
 
 while (length(infectious(population)) != 0) & (tick < maxlength)
@@ -257,16 +274,16 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
 
     ## Change in survival
     for agent in infectious(population)
-        agent.clock -= 1
+        agent.clock_death -= 1
     end
 
     ## Remove agents that died
-    population = filter(x -> x.clock > 0, population)
+    population = filter(x -> x.clock_death > 0, population)
 
     ## Store population size
     S[tick] = length(healthy(population))
     I[tick] = length(infectious(population))
-    #R[tick] = length(vaccinated(population))
+    R[tick] = length(vaccinated(population))
 end
 
 # ## Analyse des résultats
@@ -296,7 +313,7 @@ current_figure()
 # individus. Pour ceci, nous devons prendre le contenu de `events`, et vérifier
 # combien de fois chaque individu est représenté dans le champ `from`:
 
-infxn_by_uuid = countmap([infections.from for infections in infections]);
+infxn_by_uuid = countmap([infections.from for infection in infections]);
 
 # La commande `countmap` renvoie un dictionnaire, qui associe chaque UUID au
 # nombre de fois ou il apparaît:
@@ -323,8 +340,8 @@ f
 # l'épidémie. Pour ceci, nous allons extraire l'information sur le temps et la
 # position de chaque infection:
 
-t = [infections.time for infections in infections];
-pos = [(infections.x, infections.y) for infections in infections];
+t = [infections.time for infection in infections];
+pos = [(infections.x, infections.y) for infection in infections];
 
 #
 
