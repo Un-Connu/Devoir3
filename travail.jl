@@ -10,6 +10,14 @@
 #      prenom: Deuxième
 #      matricule: XXXXXXXX
 #      github: DeuxiAut
+#    - nom: Auteur
+#      prenom: Troisième
+#      matricule: XXXXXXXX
+#      github: TroisièmeAuteur
+#    - nom: Auteur
+#      prenom: Quatrième
+#      matricule: XXXXXXXX
+#      github: QuatrièmeAuteur
 # ---
 
 # # Introduction
@@ -74,8 +82,9 @@ UUIDs.uuid4()
 Base.@kwdef mutable struct Agent
     x::Int64 = 0
     y::Int64 = 0
-    clock::Int64 = 20
+    clock::Int64 = 21
     infectious::Bool = false
+   # vaccination::Bool = false ## ERROR: invalid redefinition of constant Main.Agent
     id::UUIDs.UUID = UUIDs.uuid4()
 end
 
@@ -145,6 +154,8 @@ isinfectious(agent::Agent) = agent.infectious
 
 ishealthy(agent::Agent) = !isinfectious(agent)
 
+isvaccinated(agent::Agent) = 0  ## Sélectionner les agents vaccinés
+
 # On peut maintenant définir une fonction pour prendre uniquement les agents qui
 # sont infectieux dans une population. Pour que ce soit clair, nous allons créer
 # un _alias_, `Population`, qui voudra dire `Vector{Agent}`:
@@ -152,6 +163,7 @@ ishealthy(agent::Agent) = !isinfectious(agent)
 const Population = Vector{Agent}
 infectious(pop::Population) = filter(isinfectious, pop)
 healthy(pop::Population) = filter(ishealthy, pop)
+vaccinated(pop::Population) = filter() ## Ajouter un filtre qui permet de sélectionner les individues vaccinés dans la population
 
 # Nous allons enfin écrire une fonction pour trouver l'ensemble des agents d'une
 # population qui sont dans la même cellule qu'un agent:
@@ -171,9 +183,10 @@ end
 
 Base.show(io::IO, ::MIME"text/plain", p::Population) = print(io, "Une population avec $(length(p)) agents")
 
-# Et on génère notre population initiale:
+# Et on génère notre population initiale avec une taille de 3750 individus:
 
-population = Population(L, 3750)
+n = 3750
+population = Population(L, n)
 
 # Pour commencer la simulation, il faut identifier un cas index, que nous allons
 # choisir au hasard dans la population:
@@ -181,7 +194,7 @@ population = Population(L, 3750)
 rand(population).infectious = true
 
 # Nous initialisons la simulation au temps 0, et nous allons la laisser se
-# dérouler au plus 1000 pas de temps:
+# dérouler au plus 2000 pas de temps:
 
 tick = 0
 maxlength = 2000
@@ -191,6 +204,7 @@ maxlength = 2000
 
 S = zeros(Int64, maxlength);
 I = zeros(Int64, maxlength);
+R = zeros(Int64, maxlength);
 
 # Mais nous allons aussi stocker tous les évènements d'infection qui ont lieu
 # pendant la simulation:
@@ -203,10 +217,18 @@ struct InfectionEvent
     y::Int64
 end
 
-events = InfectionEvent[]
+struct VaccinationEvent
+    time::Int64
+    to::UUIDs.UUID
+    x::Int64
+    y::Int64
+end
 
-# Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
-# du bon type, et que nos `InfectionEvent` sont immutables.
+infections = InfectionEvent[]
+vaccinations  = VaccinationEvent[]
+
+# Notez qu'on a contraint nos vecteurs `infections` et 'vaccinations' a ne contenir _que_ des valeurs
+# du bon type, et que nos `InfectionEvent` et 'VaccinationEvent' sont immutables.
 
 # ## Simulation
 
@@ -222,13 +244,13 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         move!(agent, L; torus=false)
     end
 
-    ## Infection
+    ## Infection : Pour chaque individu infectieux dans la population, on considère les individus sains dans la même cellule. Ces individus ont alors 40% de chance de devenir infectieux.
     for agent in Random.shuffle(infectious(population))
         neighbors = healthy(incell(agent, population))
         for neighbor in neighbors
             if rand() <= 0.4
                 neighbor.infectious = true
-                push!(events, InfectionEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
+                push!(infections, InfectionEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
             end
         end
     end
@@ -256,6 +278,7 @@ end
 
 S = S[1:tick];
 I = I[1:tick];
+R = R[1:tick];
 
 #-
 
@@ -263,6 +286,7 @@ f = Figure()
 ax = Axis(f[1, 1]; xlabel="Génération", ylabel="Population")
 stairs!(ax, 1:tick, S, label="Susceptibles", color=:black)
 stairs!(ax, 1:tick, I, label="Infectieux", color=:red)
+stairs!(ax, 1:tick, R, label="Rétablis", color=:blue)
 axislegend(ax)
 current_figure()
 
@@ -272,7 +296,7 @@ current_figure()
 # individus. Pour ceci, nous devons prendre le contenu de `events`, et vérifier
 # combien de fois chaque individu est représenté dans le champ `from`:
 
-infxn_by_uuid = countmap([event.from for event in events]);
+infxn_by_uuid = countmap([infections.from for infections in events]);
 
 # La commande `countmap` renvoie un dictionnaire, qui associe chaque UUID au
 # nombre de fois ou il apparaît:
@@ -299,8 +323,8 @@ f
 # l'épidémie. Pour ceci, nous allons extraire l'information sur le temps et la
 # position de chaque infection:
 
-t = [event.time for event in events];
-pos = [(event.x, event.y) for event in events];
+t = [infections.time for infections in events];
+pos = [(infections.x, infections.y) for infections in events];
 
 #
 
