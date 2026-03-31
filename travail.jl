@@ -102,6 +102,7 @@ ishealthy(agent::Agent) = !isinfectious(agent)
 isvaccinated(agent::Agent) = agent.vaccinated
 isunvaccinated(agent::Agent)=!isvaccinated(agent)
 
+
 # On peut maintenant définir une fonction pour prendre uniquement les agents qui
 # sont infectieux dans une population. Pour que ce soit clair, nous allons créer
 # un _alias_, `Population`, qui voudra dire `Vector{Agent}`:
@@ -139,7 +140,6 @@ population = Population(L, 3750)
 # choisir au hasard dans la population:
 
 rand(population).infectious = true
-rand(population).vaccinated = true
 
 # Nous initialisons la simulation au temps 0, et nous allons la laisser se
 # dérouler au plus 1000 pas de temps:
@@ -168,7 +168,6 @@ end
 
 struct VaccinEvent
     time::Int64
-    from::UUIDs.UUID
     to::UUIDs.UUID
     x::Int64
     y::Int64
@@ -193,53 +192,7 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     ## Movement
     for agent in population
         move!(agent, L; torus=false)
-    end
-
-    # TEST + VACCINATION
-    #for agent in population
-        # find a way to check if uninfected or not with RAT
-        #if budget >= 4
-            #CHECK STATE + PROBABILITY (95%)
-            #if rand() <= 0.05
-                #SOME BULLSHIT#
-                #agent.infectious! = !agent.infectious!
-            #end
-            #agent.infectious = agent.infectious
-            #if agent.infectious == true
-                # VACCINE function (done)
-            #end
-            #budget= budget-4
-        #end
-    #end
-
-    ## Infection
-    for agent in Random.shuffle(infectious(population))
-        neighbors = (unvaccinated(incell(agent, population)))
-        for neighbor in neighbors
-            if rand() <= 0.4
-                neighbor.infectious = true
-                push!(events, InfectionEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
-            end
-        end
-    end
-
-
-    ## vaccin
-    if population != 3750
-        
-        if budget >=17
-            for agent in Random.shuffle(vaccinated(population))
-            neighbors = unvaccinated(incell(agent, population))
-                for neighbor in neighbors
-                neighbor.vaccinated = true
-                neighbor.timevacc = tick
-                push!(eventsvaccin, VaccinEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
-                budget=(budget-17)
-                tempsvacc=tick
-                end
-            end
-        end
-    end
+    end    
 
     ## Change in survival
     for agent in infectious(population)
@@ -248,13 +201,40 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
 
   ## Change in vaccination effect
     for agent in vaccinated(population)
-        if tick >= agent.timevacc+2
+        if tick >= (agent.timevacc)+2
             agent.infectious=false
         end
     end
 
     ## Remove agents that died
     population = filter(x -> x.clock > 0, population)
+
+if population == 3749
+        for agent in population
+            # find a way to check if uninfected or not with RAT
+            if budget >= 4
+                    for agent in healthy(population)
+                        budget=(budget-4)
+                        if rand() >= 0.95
+                            agent.vaccinated = true
+                            push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+                            agent.timevacc=tick
+                            budget = (budget-17)
+                        end
+                    end
+                    for agent in infectious(population)
+                        budget=(budget-4)
+                        if rand() <= 0.95
+                            agent.vaccinated = true
+                            push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+                            agent.timevacc=tick
+                            budget = (budget-17)
+                        end
+                    end
+            end
+        end
+    end
+
 
     ## Store population size
     S[tick] = length(filter(isunvaccinated,healthy(population)))
@@ -269,6 +249,7 @@ end
 
 # Avant toute chose, nous allons couper les séries temporelles au moment de la
 # dernière génération:
+
 
 S = S[1:tick];
 I = I[1:tick];
