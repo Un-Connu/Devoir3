@@ -219,30 +219,33 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     ## Remove agents that died
     population = filter(x -> x.clock > 0, population)
 
-if population == 3749
-        for agent in population
-            # find a way to check if uninfected or not with RAT
+if length(population) == 3749
+    # test RAT    
             if budget >= 4
                     for agent in healthy(population)
                         budget=(budget-4)
                         if rand() >= 0.95
-                            agent.vaccinated = true
-                            push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
-                            agent.timevacc=tick
-                            budget = (budget-17)
+                            if budget >=17
+                                agent.vaccinated = true
+                                push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+                                agent.timevacc=tick
+                                budget = (budget-17)
+                            end
                         end
                     end
                     for agent in infectious(population)
                         budget=(budget-4)
                         if rand() <= 0.95
-                            agent.vaccinated = true
-                            push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
-                            agent.timevacc=tick
-                            budget = (budget-17)
+                            if budget >= 17
+                                agent.vaccinated = true
+                                push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+                                agent.timevacc=tick
+                                budget = (budget-17)
+                            end
                         end
                     end
             end
-        end
+        
     end
 
 
@@ -252,6 +255,7 @@ if population == 3749
     R[tick] = length(filter(isvaccinated,healthy(population)))
 
 end
+
 
 # ## Analyse des résultats
 
