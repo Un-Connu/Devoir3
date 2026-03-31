@@ -206,6 +206,16 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         end
     end
 
+    for agent in Random.shuffle(infectious(population))
+        neighbors = unvaccinated(incell(agent, population))
+        for neighbor in neighbors
+            if rand() <= 0.4
+                neighbor.infectious = true
+                push!(events, InfectionEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
+            end
+        end
+    end
+
     ## Remove agents that died
     population = filter(x -> x.clock > 0, population)
 
@@ -272,6 +282,7 @@ current_figure()
 # combien de fois chaque individu est représenté dans le champ `from`:
 
 infxn_by_uuid = countmap([event.from for event in events]);
+vaccincount = countmap([event.to for event in eventsvaccin])
 
 # La commande `countmap` renvoie un dictionnaire, qui associe chaque UUID au
 # nombre de fois ou il apparaît:
@@ -279,6 +290,7 @@ infxn_by_uuid = countmap([event.from for event in events]);
 # Notez que ceci nous indique combien d'individus ont été infectieux au total:
 
 length(infxn_by_uuid)
+length(vaccincount)
 
 # Pour savoir combien de fois chaque nombre d'infections apparaît, il faut
 # utiliser `countmap` une deuxième fois:
