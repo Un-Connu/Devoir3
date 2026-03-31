@@ -1,3 +1,54 @@
+# ---
+# title: Titre du travail
+# repository: tpoisot/BIO245-modele
+# auteurs:
+#    - nom: Auteur
+#      prenom: Premier
+#      matricule: XXXXXXXX
+#      github: premierAuteur
+#    - nom: Auteur
+#      prenom: Deuxième
+#      matricule: XXXXXXXX
+#      github: DeuxiAut
+# ---
+
+# # Introduction
+
+# # Présentation du modèle
+
+# # Implémentation
+
+# ## Packages nécessaires
+
+import Random
+Random.seed!(123456)
+using CairoMakie
+
+# ## Inclure du code
+
+# Tous les fichiers dans le dossier `code` peuvent être ajoutés au travail
+# final. C'est par exemple utile pour déclarer l'ensemble des fonctions du
+# modèle hors du document principal.
+
+# Le contenu des fichiers est inclus avec `include("code/nom_fichier.jl")`.
+
+# Attention! Il faut que le code soit inclus au bon endroit (avant que les
+# fonctions déclarées soient appellées).
+
+include("code/01_test.jl")
+
+# ## Une autre section
+
+"""
+    foo(x, y)
+
+Cette fonction ne fait rien.
+"""
+function foo(x, y)
+    ## Cette ligne est un commentaire
+    return nothing
+end
+
 # # Simulations
 
 # Nous allons simuler le comportement d'une épidémie, qui se transmet par
@@ -24,14 +75,11 @@ Base.@kwdef mutable struct Agent
     x::Int64 = 0
     y::Int64 = 0
     clock::Int64 = 20
-    timevacc::Int64 = 0
     infectious::Bool = false
-    vaccinated::Bool = false
     id::UUIDs.UUID = UUIDs.uuid4()
 end
 
 # On peut créer un agent pour vérifier:
-
 
 Agent()
 
@@ -70,7 +118,6 @@ rand(Agent, L, 3)
 # On peut maintenant exprimer l'opération de déplacer un agent dans le paysage.
 # Puisque la position de l'agent va changer, notre fonction se termine par `!`:
 
-
 function move!(A::Agent, L::Landscape; torus=true)
     A.x += rand(-1:1)
     A.y += rand(-1:1)
@@ -98,20 +145,13 @@ isinfectious(agent::Agent) = agent.infectious
 
 ishealthy(agent::Agent) = !isinfectious(agent)
 
-# vaccinné
-isvaccinated(agent::Agent) = agent.vaccinated
-isunvaccinated(agent::Agent)=!isvaccinated(agent)
-
 # On peut maintenant définir une fonction pour prendre uniquement les agents qui
 # sont infectieux dans une population. Pour que ce soit clair, nous allons créer
 # un _alias_, `Population`, qui voudra dire `Vector{Agent}`:
 
 const Population = Vector{Agent}
-
 infectious(pop::Population) = filter(isinfectious, pop)
 healthy(pop::Population) = filter(ishealthy, pop)
-vaccinated(pop::Population) = filter(isvaccinated, pop)
-unvaccinated(pop::Population)=filter(isunvaccinated, pop)
 
 # Nous allons enfin écrire une fonction pour trouver l'ensemble des agents d'une
 # population qui sont dans la même cellule qu'un agent:
@@ -139,21 +179,18 @@ population = Population(L, 3750)
 # choisir au hasard dans la population:
 
 rand(population).infectious = true
-rand(population).vaccinated = true
 
 # Nous initialisons la simulation au temps 0, et nous allons la laisser se
 # dérouler au plus 1000 pas de temps:
 
 tick = 0
 maxlength = 2000
-budget= 21000
 
 # Pour étudier les résultats de la simulation, nous allons stocker la taille de
 # populations à chaque pas de temps:
 
 S = zeros(Int64, maxlength);
 I = zeros(Int64, maxlength);
-R = zeros(Int64, maxlength);
 
 # Mais nous allons aussi stocker tous les évènements d'infection qui ont lieu
 # pendant la simulation:
@@ -166,17 +203,7 @@ struct InfectionEvent
     y::Int64
 end
 
-struct VaccinEvent
-    time::Int64
-    from::UUIDs.UUID
-    to::UUIDs.UUID
-    x::Int64
-    y::Int64
-end
-
-
 events = InfectionEvent[]
-eventsvaccin = VaccinEvent[]
 
 # Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` sont immutables.
@@ -195,48 +222,13 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         move!(agent, L; torus=false)
     end
 
-    # TEST + VACCINATION
-    #for agent in population
-        # find a way to check if uninfected or not with RAT
-        #if budget >= 4
-            #CHECK STATE + PROBABILITY (95%)
-            #if rand() <= 0.05
-                #SOME BULLSHIT#
-                #agent.infectious! = !agent.infectious!
-            #end
-            #agent.infectious = agent.infectious
-            #if agent.infectious == true
-                # VACCINE function (done)
-            #end
-            #budget= budget-4
-        #end
-    #end
-
     ## Infection
     for agent in Random.shuffle(infectious(population))
-        neighbors = (unvaccinated(incell(agent, population)))
+        neighbors = healthy(incell(agent, population))
         for neighbor in neighbors
             if rand() <= 0.4
                 neighbor.infectious = true
                 push!(events, InfectionEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
-            end
-        end
-    end
-
-
-    ## vaccin
-    if population != 3750
-        
-        if budget >=17
-            for agent in Random.shuffle(vaccinated(population))
-            neighbors = unvaccinated(incell(agent, population))
-                for neighbor in neighbors
-                neighbor.vaccinated = true
-                neighbor.timevacc = tick
-                push!(eventsvaccin, VaccinEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
-                budget=(budget-17)
-                tempsvacc=tick
-                end
             end
         end
     end
@@ -246,20 +238,12 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         agent.clock -= 1
     end
 
-  ## Change in vaccination effect
-    for agent in vaccinated(population)
-        if tick >= agent.timevacc+2
-            agent.infectious=false
-        end
-    end
-
     ## Remove agents that died
     population = filter(x -> x.clock > 0, population)
 
     ## Store population size
-    S[tick] = length(filter(isunvaccinated,healthy(population)))
+    S[tick] = length(healthy(population))
     I[tick] = length(infectious(population))
-    R[tick] = length(filter(isvaccinated,healthy(population)))
 
 end
 
@@ -272,7 +256,6 @@ end
 
 S = S[1:tick];
 I = I[1:tick];
-R = R[1:tick];
 
 #-
 
@@ -280,7 +263,6 @@ f = Figure()
 ax = Axis(f[1, 1]; xlabel="Génération", ylabel="Population")
 stairs!(ax, 1:tick, S, label="Susceptibles", color=:black)
 stairs!(ax, 1:tick, I, label="Infectieux", color=:red)
-stairs!(ax, 1:tick, R, label="Recovered", color=:blue)
 axislegend(ax)
 current_figure()
 
@@ -356,3 +338,20 @@ scatter(t, first.(pos), color=:black, alpha=0.5)
 # et y
 
 scatter(t, last.(pos), color=:black, alpha=0.5)
+
+# # Présentation des résultats
+
+# La figure suivante représente des valeurs aléatoires:
+
+hist(randn(1000), color=:grey80)
+
+# # Discussion
+
+# On peut aussi citer des références dans le document `references.bib`, qui doit
+# être au format BibTeX. Les références peuvent être citées dans le texte avec
+# `@` suivi de la clé de citation. Par exemple: @ermentrout1993cellular -- la
+# bibliographie sera ajoutée automatiquement à la fin du document.
+
+# Le format de la bibliographie est American Physics Society, et les références
+# seront correctement présentées dans ce format. Vous ne devez/pouvez pas éditer
+# la bibliographie à la main.
