@@ -99,6 +99,7 @@ isinfectious(agent::Agent) = agent.infectious
 ishealthy(agent::Agent) = !isinfectious(agent)
 
 # vaccinné
+
 isvaccinated(agent::Agent) = agent.vaccinated
 isunvaccinated(agent::Agent)=!isvaccinated(agent)
 
@@ -134,7 +135,8 @@ Base.show(io::IO, ::MIME"text/plain", p::Population) = print(io, "Une population
 
 # Et on génère notre population initiale:
 
-population = Population(L, 3750)
+taille = 3750
+population = Population(L, taille)
 
 # Pour commencer la simulation, il faut identifier un cas index, que nous allons
 # choisir au hasard dans la population:
@@ -177,6 +179,62 @@ end
 events = InfectionEvent[]
 eventsvaccin = VaccinEvent[]
 
+# fonction qui permet de déterminer comment est-ce qu'on planifie les tests RAT
+
+#function qui_tester(population)
+   # population = Population.healthy
+   # return()
+#end
+
+# Ce vecteur nous permettra de stocker nos connaissances tant qu'à la contamination des agents
+
+knowledge = zeros(Bool, taille)
+
+# test RAT
+
+'''
+'''
+function RAT(agent_teste)
+    if rand() <= 0.95
+        knowledge[agent_teste] = true ##population[no_agent].infectious
+    end
+    return(knowledge[agent_teste])
+end
+
+# vaccination
+
+'''
+'''
+function vaccin(no_agent)
+    agent = population[no_agent]
+    agent.vaccinated = true
+    push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+    population[no_agent].timevacc=2
+end
+
+'''
+'''
+function gestion_budget(budget, taille)
+    if length(population) < taille
+        if budget >= 4
+            for Agent in infectious(population)
+                Rat(Agent)
+                budget = budget -4
+            end
+        end
+        if budget >= 17
+            for Agent in knowledge
+                if knowledge == true
+                    vaccin(Agent)
+                    budget = (budget-17)
+                end
+            end   
+        end 
+    end
+return(budget)
+end
+
+
 # Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` sont immutables.
 
@@ -189,6 +247,8 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
 
     tick += 1
 
+    population = filter(x -> x.clock > 0, population) ## On enlève les agents morts avant de faire déplacer la population parce les individus morts ne se déplacent pas...
+
     ## Movement
     for agent in population
         move!(agent, L; torus=false)
@@ -199,10 +259,13 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         agent.clock -= 1
     end
 
-  ## Change in vaccination effect
-    for agent in vaccinated(population)
-        if tick >= (agent.timevacc)+2
-            agent.infectious=false
+    ## Change in vaccination effect
+    for agents in isvaccinated
+            if agent.timevacc == 0
+                agent.infectious=false
+            else
+                agent.timevacc -= 1
+            end
         end
     end
 
@@ -216,38 +279,7 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         end
     end
 
-    ## Remove agents that died
-    population = filter(x -> x.clock > 0, population)
-
-if length(population) == 3749
-    # test RAT    
-            if budget >= 4
-                    for agent in healthy(population)
-                        budget=(budget-4)
-                        if rand() >= 0.95
-                            if budget >=17
-                                agent.vaccinated = true
-                                push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
-                                agent.timevacc=tick
-                                budget = (budget-17)
-                            end
-                        end
-                    end
-                    for agent in infectious(population)
-                        budget=(budget-4)
-                        if rand() <= 0.95
-                            if budget >= 17
-                                agent.vaccinated = true
-                                push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
-                                agent.timevacc=tick
-                                budget = (budget-17)
-                            end
-                        end
-                    end
-            end
-        
-    end
-
+    gestion_budget(budget, taille)
 
     ## Store population size
     S[tick] = length(filter(isunvaccinated,healthy(population)))
