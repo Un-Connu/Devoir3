@@ -215,23 +215,24 @@ end
 '''
 '''
 function gestion_budget(budget, taille)
+
     if length(population) < taille
-        if budget >= 4
-            for Agent in infectious(population)
-                Rat(Agent)
+        for i in eachindex(population)
+            if population[i].infectious && budget >= 4
+                RAT(i)
                 budget = budget -4
             end
         end
-        if budget >= 17
-            for Agent in knowledge
-                if knowledge == true
-                    vaccin(Agent)
-                    budget = (budget-17)
-                end
+
+        for i in eachindex(population)
+            if knowledge[i] &&  budget >= 17
+                vaccin(i)
+                budget = budget-17
             end   
         end 
     end
-return(budget)
+
+    return(budget)
 end
 
 
