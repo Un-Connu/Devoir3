@@ -6,12 +6,12 @@
 using CairoMakie
 CairoMakie.activate!(px_per_unit=6.0)
 using StatsBase
-import Random
+using Random
 
 # Puisque nous allons identifier des agents, nous utiliserons des UUIDs pour
 # leur donner un indentifiant unique:
 
-import UUIDs
+using UUIDs
 UUIDs.uuid4()
 
 # ## Création des types
@@ -25,6 +25,7 @@ Base.@kwdef mutable struct Agent
     y::Int64 = 0
     clock::Int64 = 20
     timevacc::Int64 = 0
+    timedeath::Int64 = 0
     infectious::Bool = false
     vaccinated::Bool = false
     id::UUIDs.UUID = UUIDs.uuid4()
@@ -91,6 +92,7 @@ end
 # Nous pouvons maintenant définir des fonctions qui vont nous permettre de nous
 # simplifier la rédaction du code. Par exemple, on peut vérifier si un agent est
 # infectieux:
+
 
 isinfectious(agent::Agent) = agent.infectious
 
@@ -219,10 +221,11 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     ## Remove agents that died
     population = filter(x -> x.clock > 0, population)
 
-if length(population) == 3749
+if length(population) == 3749 # NEED TO MAKE IT HAPPEN ONLY ONCE
     # test RAT    
-            if budget >= 4
+            
                     for agent in healthy(population)
+                        if budget >= 4
                         budget=(budget-4)
                         if rand() >= 0.95
                             if budget >=17
@@ -233,7 +236,9 @@ if length(population) == 3749
                             end
                         end
                     end
+                    end
                     for agent in infectious(population)
+                        if budget >= 4
                         budget=(budget-4)
                         if rand() <= 0.95
                             if budget >= 17
@@ -244,7 +249,8 @@ if length(population) == 3749
                             end
                         end
                     end
-            end
+                    end
+            
         
     end
 
@@ -276,7 +282,7 @@ ax = Axis(f[1, 1]; xlabel="Génération", ylabel="Population")
 stairs!(ax, 1:tick, S, label="Susceptibles", color=:black)
 stairs!(ax, 1:tick, I, label="Infectieux", color=:red)
 stairs!(ax, 1:tick, R, label="Recovered", color=:blue)
-axislegend(ax)
+axislegend(ax, position = :lb)
 current_figure()
 
 # ### Nombre de cas par individu infectieux
@@ -300,6 +306,7 @@ length(vaccincount)
 # utiliser `countmap` une deuxième fois:
 
 nb_inxfn = countmap(values(infxn_by_uuid))
+nb_vaccn = countmap(values(vaccincount))
 
 # On peut maintenant visualiser ces données:
 
@@ -323,6 +330,20 @@ f = Figure()
 ax = Axis(f[1, 1]; aspect=1, backgroundcolor=:grey97)
 hm = scatter!(ax, pos, color=t, colormap=:navia, strokecolor=:black, strokewidth=1, colorrange=(0, tick), markersize=6)
 Colorbar(f[1, 2], hm, label="Time of infection")
+hidedecorations!(ax)
+current_figure()
+
+# même chose, mais pour les vaccins
+
+t = [event.time for event in eventsvaccin];
+pos = [(event.x, event.y) for event in eventsvaccin];
+
+#
+
+f = Figure()
+ax = Axis(f[1, 1]; aspect=1, backgroundcolor=:grey97)
+hm = scatter!(ax, pos, color=t, colormap=:navia, strokecolor=:black, strokewidth=1, colorrange=(0, tick), markersize=6)
+Colorbar(f[1, 2], hm, label="Time of vaccination")
 hidedecorations!(ax)
 current_figure()
 
