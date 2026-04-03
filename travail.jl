@@ -195,7 +195,7 @@ knowledge = zeros(Bool, taille)
 '''
 '''
 function RAT(agent_teste)
-    if rand() <= 0.95
+    if rand() <= 0.95 && population[agent_teste].infectious
         knowledge[agent_teste] = true ##population[no_agent].infectious
     end
     return(knowledge[agent_teste])
@@ -225,7 +225,7 @@ function gestion_budget(budget, taille)
         end
 
         for i in eachindex(population)
-            if knowledge[i] &&  budget >= 17
+            if knowledge[i] && budget >= 17
                 vaccin(i)
                 budget = budget-17
             end   
