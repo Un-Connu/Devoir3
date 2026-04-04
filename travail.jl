@@ -235,6 +235,57 @@ function gestion_budget(budget, taille)
     return(budget)
 end
 
+# On test et vaccine les gens dans un disque autour du premier mort
+
+'''
+'''
+function distance(x1, y1, x2, y2)
+    distance = sqrt((x2-x1)^2+(y2-y1)^2)
+    return(distance)
+end
+
+'''
+'''
+function anneau(distance_min::Int64, distance_max::Int64)
+    
+    surveiller = Agent[]
+
+    if population == taille -1 
+
+        dead = filter(x -> x.clock == 0, population)
+
+        for agent in population
+            d = distance(dead.x, dead.y, agent.x, agent.y)
+            if distance_min <= d <= distance_max
+                push!(surveiller, agent)
+            end
+        end
+
+        return(surveiller)
+    
+    else
+        return("Aucun agent n'est mort")
+    end
+
+end
+
+function move!(A::Agent, L::Landscape; torus=true)
+    A.x += rand(-1:1)
+    A.y += rand(-1:1)
+    if torus
+        A.y = A.y < L.ymin ? L.ymax : A.y
+        A.x = A.x < L.xmin ? L.xmax : A.x
+        A.y = A.y > L.ymax ? L.ymin : A.y
+        A.x = A.x > L.xmax ? L.xmin : A.x
+    else
+        A.y = A.y < L.ymin ? L.ymin : A.y
+        A.x = A.x < L.xmin ? L.xmin : A.x
+        A.y = A.y > L.ymax ? L.ymax : A.y
+        A.x = A.x > L.xmax ? L.xmax : A.x
+    end
+    return A
+end
+
 
 # Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` sont immutables.
