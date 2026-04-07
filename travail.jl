@@ -218,17 +218,52 @@ eventsvaccin = VaccinEvent[]
 # Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` sont immutables.
 
-# ## Simulation
- function vaccination(agent, budget)
-        if budget >=17
-            push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
-            agent.timevacc=tick
-            budget = (budget-17)
+# On test et vaccine les gens dans un disque autour du premier mort
+
+'''
+'''
+function distance(x1, y1, x2, y2)
+    distance = sqrt((x2-x1)^2+(y2-y1)^2)
+    return(distance)
+end
+
+'''
+'''
+function anneau(distance_min::Int64, distance_max::Int64)
+    
+    surveiller = Agent[]
+
+    if population == taille -1 
+
+        dead = filter(x -> x.clock == 0, population)
+
+        for agent in population
+            d = distance(dead.x, dead.y, agent.x, agent.y)
+            if distance_min <= d <= distance_max
+                push!(surveiller, agent)
+            end
         end
+
+        return(surveiller)
+    
+    else
+        return("Aucun agent n'est mort")
     end
 
-    function RAT(budget, population)
-    for agent in healthy(population)
+end
+
+# ## Simulation
+function vaccination(agent, budget)
+    if budget >=17
+        push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+        agent.timevacc=tick
+        budget = (budget-17)
+    end
+end
+
+function RAT(budget, population)
+    anneau(5,15)
+    for agent in healthy(surveiller)
         if budget >= 4
             budget=(budget-4)
             if rand() >= 0.95
@@ -240,11 +275,11 @@ eventsvaccin = VaccinEvent[]
         if budget >= 4
             budget=(budget-4)
             if rand() <= 0.95
-            vaccination(agent, budget)
+                vaccination(agent, budget)
             end
         end
     end  
-    end
+end
 
 while (length(infectious(population)) != 0) & (tick < maxlength)
 
