@@ -221,8 +221,8 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     ## Remove agents that died
     population = filter(x -> x.clock > 0, population)
 
-if length(population) == 3749 # NEED TO MAKE IT HAPPEN ONLY ONCE
-    # test RAT    
+    if length(population) == 3749 # NEED TO MAKE IT HAPPEN ONLY ONCE
+
             
                     for agent in healthy(population)
                         if budget >= 4
@@ -302,6 +302,7 @@ vaccincount = countmap([event.to for event in eventsvaccin])
 length(infxn_by_uuid)
 length(vaccincount)
 
+budget
 # Pour savoir combien de fois chaque nombre d'infections apparaît, il faut
 # utiliser `countmap` une deuxième fois:
 
