@@ -183,32 +183,6 @@ eventsvaccin = VaccinEvent[]
 # du bon type, et que nos `InfectionEvent` sont immutables.
 
 # ## Simulation
- function vaccination(agent, budget)
-        if budget >=17
-            push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
-            agent.timevacc=tick
-            budget = (budget-17)
-        end
-    end
-
-    function RAT(budget, population)
-    for agent in healthy(population)
-        if budget >= 4
-            budget=(budget-4)
-            if rand() >= 0.95
-                vaccination(agent, budget)
-            end
-        end
-    end
-    for agent in infectious(population)  
-        if budget >= 4
-            budget=(budget-4)
-            if rand() <= 0.95
-            vaccination(agent, budget)
-            end
-        end
-    end  
-    end
 
 while (length(infectious(population)) != 0) & (tick < maxlength)
 
@@ -216,8 +190,6 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     global tick, population
 
     tick += 1
-  
-    population = filter(x -> x.clock > 0, population)
 
     ## Movement
     for agent in population
@@ -247,12 +219,37 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     end
 
     ## Remove agents that died
-
+    population = filter(x -> x.clock > 0, population)
 
 if length(population) == 3749 # NEED TO MAKE IT HAPPEN ONLY ONCE
     # test RAT    
             
-                    RAT(budget, population)
+                    for agent in healthy(population)
+                        if budget >= 4
+                        budget=(budget-4)
+                        if rand() >= 0.95
+                            if budget >=17
+                                agent.vaccinated = true
+                                push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+                                agent.timevacc=tick
+                                budget = (budget-17)
+                            end
+                        end
+                    end
+                    end
+                    for agent in infectious(population)
+                        if budget >= 4
+                        budget=(budget-4)
+                        if rand() <= 0.95
+                            if budget >= 17
+                                agent.vaccinated = true
+                                push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+                                agent.timevacc=tick
+                                budget = (budget-17)
+                            end
+                        end
+                    end
+                    end
             
         
     end
