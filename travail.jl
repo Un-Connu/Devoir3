@@ -283,28 +283,6 @@ function RAT(budget, population)
     return(budget)
 end
 
-#function RAT(budget, population)
-#    for agent in healthy(population)
-#        if budget >= 4
-#            budget=(budget-4)
-#            if rand() >= 0.95 && agent.
-#                budget = vaccination(agent, budget) ## Pour être certain de mettre le budget à jours
-#            end
-#        end
-#    end
-#
-#    for agent in infectious(population)  
-#        if budget >= 4
-#            budget=(budget-4)
-#            if rand() <= 0.95
-#                budget = vaccination(agent, budget) ## Pour être certain de mettre le budget à jours
-#            end
-#        end
-#    end
-#
-#    return(budget)
-#end
-
 while (length(infectious(population)) != 0) & (tick < maxlength)
 
     ## On spécifie que nous utilisons les variables définies plus haut
@@ -325,9 +303,11 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         agent.clock -= 1
     end
 
+
   ## Change in vaccination effect
     for agent in vaccinated(population)
-        if tick >= (agent.timevacc)+2
+        
+        if tick >= agent.timevacc+2
             agent.infectious=false
         end
     end
@@ -344,8 +324,8 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
 
     ## Remove agents that died
 
-
     if length(population) == 3749 # NEED TO MAKE IT HAPPEN ONLY ONCE
+
     ## test RAT    
         budget = RAT(budget, surveiller) ## Pour enregistrer la valeur du budget après avoir fait la fonction 
     end
@@ -353,7 +333,7 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     ## Store population size
     S[tick] = length(filter(isunvaccinated,healthy(population)))
     I[tick] = length(infectious(population))
-    R[tick] = length(filter(isvaccinated,healthy(population)))
+    R[tick] = length(filter(a ->a.vaccinated && !a.infectious, population))
 
 end
 
