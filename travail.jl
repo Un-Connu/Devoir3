@@ -69,7 +69,6 @@ end
 
 # On peut créer un agent pour vérifier:
 
-
 Agent()
 
 # La deuxième structure dont nous aurons besoin est un paysage, qui est défini
@@ -172,7 +171,8 @@ Base.show(io::IO, ::MIME"text/plain", p::Population) = print(io, "Une population
 
 # Et on génère notre population initiale:
 
-population = Population(L, 3750)
+taille = 3750
+population = Population(L, taille)
 
 # Pour commencer la simulation, il faut identifier un cas index, que nous allons
 # choisir au hasard dans la population:
@@ -229,57 +229,81 @@ end
 
 '''
 '''
+surveiller = Agent[]
+
 function anneau(distance_min::Int64, distance_max::Int64)
-    
-    surveiller = Agent[]
 
-    if population == taille -1 
+    if length(population) != 3750
 
-        dead = filter(x -> x.clock == 0, population)
+        dead = filter(x -> x.clock <= 0, population)    ## On place tous les agents morts dans le vecteur dead
+        
+        if !isempty(dead)   ## Si dead n'est pas vide, on mesure la distance entre le mort et chaque agents
+            dead = dead[1] ## Puisque dead peut comprendre plus qu'un mort, on prend seulement le premier
 
-        for agent in population
-            d = distance(dead.x, dead.y, agent.x, agent.y)
-            if distance_min <= d <= distance_max
-                push!(surveiller, agent)
+            for agent in population
+                d = distance(dead.x, dead.y, agent.x, agent.y)
+                if distance_min <= d <= distance_max
+                    push!(surveiller, agent)
+                end
             end
         end
-
-        return(surveiller)
-    
-    else
-        return("Aucun agent n'est mort")
     end
-
 end
 
 # ## Simulation
 function vaccination(agent, budget)
     if budget >=17
+        agent.vaccinated = true
         push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
         agent.timevacc=tick
-        budget = (budget-17)
+        return budget-17 ## Lorsque l'on met seulement "budget -= 17", le budget modifié n'est pas enregistré et on refait plusieurs fois "budget initial -17"
     end
 end
 
 function RAT(budget, population)
-    anneau(5,15)
-    for agent in healthy(surveiller)
-        if budget >= 4
-            budget=(budget-4)
-            if rand() >= 0.95
-                vaccination(agent, budget)
+    for agent in population
+        if agent.infectious
+            if budget >= 4
+                budget-=4
+                if rand() <= 0.95
+                    budget = vaccination(agent, budget) ## Pour être certain de mettre le budget à jours
+                end
+            end
+        
+        else
+            if budget >= 4
+                budget -= 4
+                if rand() >= 0.95
+                    budget = vaccination(agent, budget)
+                end
             end
         end
     end
-    for agent in infectious(population)  
-        if budget >= 4
-            budget=(budget-4)
-            if rand() <= 0.95
-                vaccination(agent, budget)
-            end
-        end
-    end  
+
+    return(budget)
 end
+
+#function RAT(budget, population)
+#    for agent in healthy(population)
+#        if budget >= 4
+#            budget=(budget-4)
+#            if rand() >= 0.95 && agent.
+#                budget = vaccination(agent, budget) ## Pour être certain de mettre le budget à jours
+#            end
+#        end
+#    end
+#
+#    for agent in infectious(population)  
+#        if budget >= 4
+#            budget=(budget-4)
+#            if rand() <= 0.95
+#                budget = vaccination(agent, budget) ## Pour être certain de mettre le budget à jours
+#            end
+#        end
+#    end
+#
+#    return(budget)
+#end
 
 while (length(infectious(population)) != 0) & (tick < maxlength)
 
@@ -287,8 +311,9 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     global tick, population
 
     tick += 1
-  
     population = filter(x -> x.clock > 0, population)
+    anneau(5,15)
+
 
     ## Movement
     for agent in population
@@ -320,14 +345,10 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     ## Remove agents that died
 
 
-if length(population) == 3749 # NEED TO MAKE IT HAPPEN ONLY ONCE
-    # test RAT    
-            
-                    RAT(budget, population)
-            
-        
+    if length(population) == 3749 # NEED TO MAKE IT HAPPEN ONLY ONCE
+    ## test RAT    
+        budget = RAT(budget, surveiller) ## Pour enregistrer la valeur du budget après avoir fait la fonction 
     end
-
 
     ## Store population size
     S[tick] = length(filter(isunvaccinated,healthy(population)))
