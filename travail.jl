@@ -1,4 +1,40 @@
-# # Simulations
+# # Introduction
+
+# Les maladies infectieuses asymtpomatiques représentent un défi majeur pour la
+# santé publique, car les individus infectés peuvent transmettre la maladie sans
+# être détectés, ce qui oblige les stratégies de contrôle à utiliser des tests
+# de dépistage et les vaccins.
+
+# Dans ce travail, nous utilisons un modèle spatial basé sur des agents afin
+# de simuler la propragation d'une maladie infectieuse. Il permet de représenter 
+# les interactions entre les individus, ce qui est important car la transmission
+# des maladies dépend fortement de la structure des contacts dans le paysage.
+# La population est composée de 3750 individus initialement naifs, ce qui correspond
+# à l'introduction d'un pathogène dans une population sans immunité, ce qu'on 
+# retrouve souvent avant l'émergence d'une épidémie.
+# La transmission se fait par contact direct avec une probabilité de 0.4, représentant
+# une maladie hautement transmissible. La durée d'infection est fixée à 21 jours,
+# ce qui permet aux individus de rester infectieux assez longtemps pour transmettre
+# le pathogène. La mortalité systématique nous permet de nous concentrer seulement
+# sur l'impact des vaccins sur la mortalité.
+# Le caractère asymptomatique des individus malades justifie l'utilisation de test
+# pour détecter les malades. Le seuil de risque de 5% pour le test est dû à
+# la possibilité d'obtenir des faux-négatifs ou faux-positifs dans la réalité.
+# Le vaccin étant parfaitement efficace, nous pourrons mesurer l'efficacité de la
+# stratégie sans considérer les variabilités. Le délai de deux jours avant activation
+# reflète le temps nécessaire à la réponse immunitaire adaptative.
+# Efin, les interventions sont limitées par un budget de 21000$, avec des coûts
+# différents pour les tests et la vaccination. Cette contrainte introduit un 
+# compromis entre dépistage et prévention, reflétant les limitations réelles des
+# systèmes de santé. L’impossibilité de connaître la prévalence sans tests simule 
+# les difficultés de surveillance épidémiologique, et le délai avant intervention
+# (après le premier décès) représente un temps de détection réaliste.
+
+# Dans ce contexte, la question posée est : quelle stratégie de dépistage et de 
+# vaccination permet de minimiser la mortalité sous contraintes budgétaires ? 
+# Nous faisons l’hypothèse qu’une stratégie À AJOUTER !!!!!!!!!!
+
+# # Modèle et implémentation
 
 # Nous allons simuler le comportement d'une épidémie, qui se transmet par
 # contact direct, et qui entraîne la mort après un intervale de temps fixe.
