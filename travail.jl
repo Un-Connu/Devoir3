@@ -221,7 +221,7 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     ## Remove agents that died
     population = filter(x -> x.clock > 0, population)
 
-    if length(population) == 3749 # NEED TO MAKE IT HAPPEN ONLY ONCE
+    if length(population) == 3749
 
             
                     for agent in healthy(population)
