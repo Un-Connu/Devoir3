@@ -256,6 +256,7 @@ events = InfectionEvent[]
 eventsvaccin = VaccinEvent[]
 
 dead = DeadAgent[]
+
 # Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` sont immutables.
 
@@ -315,10 +316,6 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
             end
         end
     end
-
-    if length(population) == 3749 ## Si il y a un mort
-   
-    ## test RAT
 
 if length(population) == 3749
     ## test RAT    
