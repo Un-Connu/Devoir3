@@ -64,6 +64,7 @@ Base.@kwdef mutable struct Agent
     infectious::Bool = false
     vaccinated::Bool = false
     surveiller::Bool = false
+    quarantined::Bool = false
     id::UUIDs.UUID = UUIDs.uuid4()
 end
 
@@ -127,30 +128,7 @@ end
 
 # On test et vaccine les gens dans un disque autour du premier mort
 
-'''
-'''
-function distance(x1, y1, x2, y2)
-    distance = sqrt((x2-x1)^2+(y2-y1)^2)
-    return(distance)
-end
 
-'''
-'''
-function anneau(distance_min::Int64, distance_max::Int64)
-
-    dead = filter(x -> x.clock <= 0, population)    ## On place tous les agents morts dans le vecteur dead
-        
-    if !isempty(dead)   ## Si dead n'est pas vide, on mesure la distance entre le mort et chaque agents
-        centre = dead[1] ## Puisque dead peut comprendre plus qu'un mort, on prend seulement le premier
-
-        for agent in population
-            d = distance(centre.x, centre.y, agent.x, agent.y)
-            if distance_min <= d <= distance_max
-                agent.surveiller = true
-            end
-        end
-    end
-end
 
 # Nous pouvons maintenant définir des fonctions qui vont nous permettre de nous
 # simplifier la rédaction du code. Par exemple, on peut vérifier si un agent est
@@ -165,8 +143,11 @@ ishealthy(agent::Agent) = !isinfectious(agent)
 # vaccinné
 isvaccinated(agent::Agent) = agent.vaccinated
 isunvaccinated(agent::Agent)=!isvaccinated(agent)
+
 issurveiller(agent::Agent)= agent.surveiller
 
+isquarantined(agent::Agent)= agent.quarantined
+ismoving(agent::Agent)= !isquarantined(agent)
 
 # On peut maintenant définir une fonction pour prendre uniquement les agents qui
 # sont infectieux dans une population. Pour que ce soit clair, nous allons créer
@@ -179,6 +160,8 @@ healthy(pop::Population) = filter(ishealthy, pop)
 vaccinated(pop::Population) = filter(isvaccinated, pop)
 unvaccinated(pop::Population)=filter(isunvaccinated, pop)
 surveiller(pop::Population)=filter(issurveiller, pop)
+moving(pop::Population)=filter(ismoving, pop)
+quarantined(pop::Population)=filter(isquarantined, pop)
 
 # Nous allons enfin écrire une fonction pour trouver l'ensemble des agents d'une
 # population qui sont dans la même cellule qu'un agent:
@@ -251,7 +234,7 @@ end
 
 events = InfectionEvent[]
 eventsvaccin = VaccinEvent[]
-#surveiller = Agent[]
+
 dead = DeadAgent[]
 # Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` sont immutables.
@@ -274,12 +257,13 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         for agent in population
             if ((agent.x - centre.x)^2 + (agent.y - centre.y)^2) <= (distance)^2
                 agent.surveiller = true
+                agent.quarantined = true
             end
         end
     end
 
     ## Movement
-    for agent in population
+    for agent in moving(population)
         move!(agent, L; torus=false)
     end    
 
@@ -292,6 +276,13 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     for agent in vaccinated(population)
         if tick >= (agent.timevacc)+2
             agent.infectious=false
+            agent.quarantined=false
+        end
+    end
+
+    for agent in quarantined(population)
+        if tick >= (centre.time)+20
+            agent.quarantined=false
         end
     end
 
@@ -410,7 +401,7 @@ vaccincount = countmap([event.to for event in eventsvaccin])
 
 length(infxn_by_uuid)
 length(vaccincount)
-budget
+length(population)
 length(surveiller(population))
 # Pour savoir combien de fois chaque nombre d'infections apparaît, il faut
 # utiliser `countmap` une deuxième fois:
