@@ -213,6 +213,8 @@ rand(population).infectious = true
 tick = 0
 maxlength = 2000
 budget= 21000
+distance = 25
+
 
 # Pour étudier les résultats de la simulation, nous allons stocker la taille de
 # populations à chaque pas de temps:
@@ -240,11 +242,17 @@ struct VaccinEvent
     y::Int64
 end
 
+struct DeadAgent
+    time::Int64
+    to::UUIDs.UUID
+    x::Int64
+    y::Int64
+end
 
 events = InfectionEvent[]
 eventsvaccin = VaccinEvent[]
 #surveiller = Agent[]
-
+dead = DeadAgent[]
 # Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` sont immutables.
 
@@ -253,12 +261,22 @@ eventsvaccin = VaccinEvent[]
 while (length(infectious(population)) != 0) & (tick < maxlength)
 
     ## On spécifie que nous utilisons les variables définies plus haut
-    global tick, population
+    global tick, population, budget, distance
     tick += 1
 
     ## On sélectionne les individus à surveiller dans l'anneau
 
-    anneau(5,50)
+       ## On place tous les agents morts dans le vecteur dead
+        
+    if !isempty(dead)   ## Si dead n'est pas vide, on mesure la distance entre le mort et chaque agents
+        centre = dead[1] ## Puisque dead peut comprendre plus qu'un mort, on prend seulement le premier
+
+        for agent in population
+            if ((agent.x - centre.x)^2 + (agent.y - centre.y)^2) <= (distance)^2
+                agent.surveiller = true
+            end
+        end
+    end
 
     ## Movement
     for agent in population
@@ -287,14 +305,14 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         end
     end
 
-    if !isempty(filter(x -> x.clock <= 0, population)) ## Si il y a un mort
+    if length(population) == 3749 ## Si il y a un mort
    
     ## test RAT
 
         for agent in intersect(healthy(population), surveiller(population)) ## On ne peut pas utiliser && combiné avec "for agent in..."
             if budget >= 4
                 budget-=4
-                agent.surveiller = false
+                
                 if rand() >= 0.95
                     if budget >=17
                         agent.vaccinated = true
@@ -309,7 +327,7 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         for agent in intersect(infectious(population), surveiller(population))
             if budget >= 4
                 budget-=4
-                agent.surveiller = false
+                
                 if rand() <= 0.95
                     if budget >= 17
                         agent.vaccinated = true
@@ -324,7 +342,13 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     end
 
     ## Remove agents that died
-    population = filter(x -> x.clock > 0, population)
+    
+    for agent in population
+        if agent.clock < 0
+            push!(dead, DeadAgent(tick, agent.id, agent.x, agent.y))
+            population = filter(x -> x.clock > 0, population)
+        end
+    end
 
     ## Store population size
     S[tick] = length(filter(isunvaccinated,healthy(population)))
@@ -372,7 +396,8 @@ vaccincount = countmap([event.to for event in eventsvaccin])
 
 length(infxn_by_uuid)
 length(vaccincount)
-
+budget
+length(surveiller(population))
 # Pour savoir combien de fois chaque nombre d'infections apparaît, il faut
 # utiliser `countmap` une deuxième fois:
 
