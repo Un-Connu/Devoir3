@@ -296,9 +296,9 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     end
 
     for agent in Random.shuffle(infectious(population))
-        neighbors = unvaccinated(incell(agent, population))
+        neighbors = healthy(incell(agent, population))
         for neighbor in neighbors
-            if rand() <= 0.4
+            if rand() <= 0.4 && neighbor.vaccinated == false
                 neighbor.infectious = true
                 push!(events, InfectionEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
             end
@@ -319,6 +319,13 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
                         push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
                         agent.timevacc=tick
                         budget-=17
+                        neighbors = unvaccinated(incell(agent, population))
+                        for neighbor in neighbors
+                            neighbor.vaccinated = true
+                            push!(eventsvaccin, VaccinEvent(tick, neighbor.id, neighbor.x, neighbor.y))
+                            neighbor.timevacc=tick
+                            budget-=17
+                        end
                     end
                 end
             end
@@ -334,6 +341,13 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
                         push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
                         agent.timevacc=tick
                         budget-=17
+                        neighbors = unvaccinated(incell(agent, population))
+                        for neighbor in neighbors
+                            neighbor.vaccinated = true
+                            push!(eventsvaccin, VaccinEvent(tick, neighbor.id, neighbor.x, neighbor.y))
+                            neighbor.timevacc=tick
+                            budget-=17
+                        end
                     end
                 end
             end
