@@ -1,3 +1,5 @@
+# **ATTENTION IL FAUT AJOUTER LES INFORMATIONS SUR LES AUTEURS**
+
 # # Introduction
 
 # Les maladies infectieuses asymtpomatiques représentent un défi majeur pour la
@@ -274,7 +276,7 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     population = filter(x -> x.clock > 0, population)
 
 if length(population) == 3749
-    # test RAT    
+    ## test RAT    
             if budget >= 4
                     for agent in healthy(population)
                         budget=(budget-4)
