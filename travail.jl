@@ -1,3 +1,5 @@
+# **ATTENTION IL FAUT AJOUTER LES INFORMATIONS SUR LES AUTEURS**
+
 # # Introduction
 
 # Les maladies infectieuses asymtpomatiques représentent un défi majeur pour la
@@ -32,12 +34,30 @@
 
 # Dans ce contexte, la question posée est : quelle stratégie de dépistage et de 
 # vaccination permet de minimiser la mortalité sous contraintes budgétaires ? 
-# Nous faisons l’hypothèse qu’une stratégie À AJOUTER !!!!!!!!!!
+# Nous faisons l’hypothèse qu’une stratégie de dépistage et de vaccination ciblée autour
+# du premier décès, avec un rayon progressivement élargi, permettra de réduire 
+# efficacement la mortalité tout en optimisant l'utilisation du budget.
 
 # # Modèle et implémentation
 
-# Nous allons simuler le comportement d'une épidémie, qui se transmet par
-# contact direct, et qui entraîne la mort après un intervale de temps fixe.
+# Nous utilisons un modèle basé sur des agents implémenté en Julia, où chaque
+# individu est représenté par une structure `Agent` contenant sa position,
+# son état d’infection, son statut vaccinal et un compteur de survie.
+
+# Les agents évoluent dans une lattice bidimensionnelle (-50, 50) et se déplacent
+# aléatoirement à chaque pas de temps. La transmission se produit lorsqu’un agent
+# infectieux partage la même cellule qu’un agent susceptible, avec une probabilité
+# de 0.4.
+
+# Les individus infectieux voient leur compteur diminuer jusqu’à leur mort après
+# 21 jours. Les individus vaccinés deviennent protégés après un délai de deux
+# générations.
+
+# Les événements d’infection et de vaccination sont enregistrés, et des séries
+# temporelles (S, I, R) permettent de suivre la dynamique de l’épidémie.
+
+# Une stratégie d’intervention est appliquée après le premier décès, en ciblant
+# les individus autour du foyer d’infection afin de limiter la propagation.
 
 using CairoMakie
 CairoMakie.activate!(px_per_unit=6.0)
@@ -236,6 +256,7 @@ events = InfectionEvent[]
 eventsvaccin = VaccinEvent[]
 
 dead = DeadAgent[]
+
 # Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` sont immutables.
 
@@ -296,10 +317,8 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
         end
     end
 
-    if length(population) == 3749 ## Si il y a un mort
-   
-    ## test RAT
-
+if length(population) == 3749
+    ## test RAT    
         for agent in intersect(healthy(population), surveiller(population)) ## On ne peut pas utiliser && combiné avec "for agent in..."
             if budget >= 4
                 budget-=4
