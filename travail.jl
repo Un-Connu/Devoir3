@@ -83,6 +83,8 @@ Base.@kwdef mutable struct Agent
     timevacc::Int64 = 0
     infectious::Bool = false
     vaccinated::Bool = false
+    surveiller::Bool = false
+    quarantined::Bool = false
     id::UUIDs.UUID = UUIDs.uuid4()
 end
 
@@ -144,6 +146,10 @@ function move!(A::Agent, L::Landscape; torus=true)
     return A
 end
 
+# On test et vaccine les gens dans un disque autour du premier mort
+
+
+
 # Nous pouvons maintenant définir des fonctions qui vont nous permettre de nous
 # simplifier la rédaction du code. Par exemple, on peut vérifier si un agent est
 # infectieux:
@@ -158,6 +164,10 @@ ishealthy(agent::Agent) = !isinfectious(agent)
 isvaccinated(agent::Agent) = agent.vaccinated
 isunvaccinated(agent::Agent)=!isvaccinated(agent)
 
+issurveiller(agent::Agent)= agent.surveiller
+
+isquarantined(agent::Agent)= agent.quarantined
+ismoving(agent::Agent)= !isquarantined(agent)
 
 # On peut maintenant définir une fonction pour prendre uniquement les agents qui
 # sont infectieux dans une population. Pour que ce soit clair, nous allons créer
@@ -169,6 +179,9 @@ infectious(pop::Population) = filter(isinfectious, pop)
 healthy(pop::Population) = filter(ishealthy, pop)
 vaccinated(pop::Population) = filter(isvaccinated, pop)
 unvaccinated(pop::Population)=filter(isunvaccinated, pop)
+surveiller(pop::Population)=filter(issurveiller, pop)
+moving(pop::Population)=filter(ismoving, pop)
+quarantined(pop::Population)=filter(isquarantined, pop)
 
 # Nous allons enfin écrire une fonction pour trouver l'ensemble des agents d'une
 # population qui sont dans la même cellule qu'un agent:
@@ -203,6 +216,8 @@ rand(population).infectious = true
 tick = 0
 maxlength = 2000
 budget= 21000
+distance = 25
+
 
 # Pour étudier les résultats de la simulation, nous allons stocker la taille de
 # populations à chaque pas de temps:
@@ -210,6 +225,7 @@ budget= 21000
 S = zeros(Int64, maxlength);
 I = zeros(Int64, maxlength);
 R = zeros(Int64, maxlength);
+
 
 # Mais nous allons aussi stocker tous les évènements d'infection qui ont lieu
 # pendant la simulation:
@@ -229,10 +245,17 @@ struct VaccinEvent
     y::Int64
 end
 
+struct DeadAgent
+    time::Int64
+    to::UUIDs.UUID
+    x::Int64
+    y::Int64
+end
 
 events = InfectionEvent[]
 eventsvaccin = VaccinEvent[]
 
+dead = DeadAgent[]
 # Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
 # du bon type, et que nos `InfectionEvent` sont immutables.
 
@@ -241,12 +264,26 @@ eventsvaccin = VaccinEvent[]
 while (length(infectious(population)) != 0) & (tick < maxlength)
 
     ## On spécifie que nous utilisons les variables définies plus haut
-    global tick, population
-
+    global tick, population, budget, distance
     tick += 1
 
+    ## On sélectionne les individus à surveiller dans l'anneau
+
+       ## On place tous les agents morts dans le vecteur dead
+        
+    if !isempty(dead)   ## Si dead n'est pas vide, on mesure la distance entre le mort et chaque agents
+        centre = dead[1] ## Puisque dead peut comprendre plus qu'un mort, on prend seulement le premier
+
+        for agent in population
+            if ((agent.x - centre.x)^2 + (agent.y - centre.y)^2) <= (distance)^2
+                agent.surveiller = true
+                agent.quarantined = true
+            end
+        end
+    end
+
     ## Movement
-    for agent in population
+    for agent in moving(population)
         move!(agent, L; torus=false)
     end    
 
@@ -259,51 +296,86 @@ while (length(infectious(population)) != 0) & (tick < maxlength)
     for agent in vaccinated(population)
         if tick >= (agent.timevacc)+2
             agent.infectious=false
+            agent.quarantined=false
+        end
+    end
+
+    for agent in quarantined(population)
+        if tick >= (centre.time)+20
+            agent.quarantined=false
         end
     end
 
     for agent in Random.shuffle(infectious(population))
-        neighbors = unvaccinated(incell(agent, population))
+        neighbors = healthy(incell(agent, population))
         for neighbor in neighbors
-            if rand() <= 0.4
+            if rand() <= 0.4 && neighbor.vaccinated == false
                 neighbor.infectious = true
                 push!(events, InfectionEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
             end
         end
     end
 
-    ## Remove agents that died
-    population = filter(x -> x.clock > 0, population)
+    if length(population) == 3749 ## Si il y a un mort
+   
+    ## test RAT
 
 if length(population) == 3749
     ## test RAT    
+        for agent in intersect(healthy(population), surveiller(population)) ## On ne peut pas utiliser && combiné avec "for agent in..."
             if budget >= 4
-                    for agent in healthy(population)
-                        budget=(budget-4)
-                        if rand() >= 0.95
-                            if budget >=17
-                                agent.vaccinated = true
-                                push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
-                                agent.timevacc=tick
-                                budget = (budget-17)
-                            end
+                budget-=4
+                
+                if rand() >= 0.95
+                    if budget >=17
+                        agent.vaccinated = true
+                        push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+                        agent.timevacc=tick
+                        budget-=17
+                        neighbors = unvaccinated(incell(agent, population))
+                        for neighbor in neighbors
+                            neighbor.vaccinated = true
+                            push!(eventsvaccin, VaccinEvent(tick, neighbor.id, neighbor.x, neighbor.y))
+                            neighbor.timevacc=tick
+                            budget-=17
                         end
                     end
-                    for agent in infectious(population)
-                        budget=(budget-4)
-                        if rand() <= 0.95
-                            if budget >= 17
-                                agent.vaccinated = true
-                                push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
-                                agent.timevacc=tick
-                                budget = (budget-17)
-                            end
-                        end
-                    end
+                end
             end
+        end
         
+        for agent in intersect(infectious(population), surveiller(population))
+            if budget >= 4
+                budget-=4
+                
+                if rand() <= 0.95
+                    if budget >= 17
+                        agent.vaccinated = true
+                        push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
+                        agent.timevacc=tick
+                        budget-=17
+                        neighbors = unvaccinated(incell(agent, population))
+                        for neighbor in neighbors
+                            neighbor.vaccinated = true
+                            push!(eventsvaccin, VaccinEvent(tick, neighbor.id, neighbor.x, neighbor.y))
+                            neighbor.timevacc=tick
+                            budget-=17
+                        end
+                    end
+                end
+            end
+        end
+
     end
 
+    ## Remove agents that died
+    
+    for agent in population
+        if agent.clock < 0
+            push!(dead, DeadAgent(tick, agent.id, agent.x, agent.y))
+            population = filter(x -> x.clock > 0, population)
+        end
+    end
 
     ## Store population size
     S[tick] = length(filter(isunvaccinated,healthy(population)))
@@ -351,7 +423,8 @@ vaccincount = countmap([event.to for event in eventsvaccin])
 
 length(infxn_by_uuid)
 length(vaccincount)
-
+length(population)
+length(surveiller(population))
 # Pour savoir combien de fois chaque nombre d'infections apparaît, il faut
 # utiliser `countmap` une deuxième fois:
 
