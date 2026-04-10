@@ -264,23 +264,24 @@ dead = DeadAgent[]
 
 for i in 1:test
 
-    # Nous initialisons la simulation au temps 0, et nous allons la laisser se dérouler au plus 1000 pas de temps:
+    global tick, population, budget, distance
+    ## Nous initialisons la simulation au temps 0, et nous allons la laisser se dérouler au plus 1000 pas de temps:
 
     tick = 0
     maxlength = 2000
     budget= 21000
     distance = 25
 
-    # Et on génère notre population initiale:
+    ## Et on génère notre population initiale:
 
     population = Population(L, 3750)
 
-    # Pour commencer la simulation, il faut identifier un cas index, que nous allons
-    # choisir au hasard dans la population:
+    ## Pour commencer la simulation, il faut identifier un cas index, que nous allons
+    ## choisir au hasard dans la population:
 
     rand(population).infectious = true
-    # Pour étudier les résultats de la simulation, nous allons stocker la taille de
-    # populations à chaque pas de temps:
+    ## Pour étudier les résultats de la simulation, nous allons stocker la taille de
+    ## populations à chaque pas de temps:
 
     S = zeros(Int64, maxlength);
     I = zeros(Int64, maxlength);
