@@ -314,7 +314,7 @@ for i in 1:test
             agent.clock -= 1
         end
 
-        # Change in vaccination effect
+        ## Change in vaccination effect
         for agent in vaccinated(population)
             if tick >= (agent.timevacc)+2
                 agent.infectious=false
@@ -322,7 +322,7 @@ for i in 1:test
             end
         end
 
-        # Si jamais des agents sont testés positifs et ne sont pas vaccinés par manque de budget, on les laisse en quarantaine
+        ## Si jamais des agents sont testés positifs et ne sont pas vaccinés par manque de budget, on les laisse en quarantaine
 
         for agent in quarantined(population)
             if tick >= (centre.time)+20
@@ -408,7 +408,7 @@ for i in 1:test
 
     end
 
-    # Store information
+    ## Store information
 
     suivi[1, i] = length(population)
     suivi[2, i] = length(vaccinated(population))
@@ -449,7 +449,7 @@ current_figure()
 # combien de fois chaque individu est représenté dans le champ `from`:
 
 infxn_by_uuid = countmap([event.from for event in events]);
-vaccincount = countmap([event.to for event in eventsvaccin])
+vaccincount = countmap([event.to for event in eventsvaccin]);
 
 # La commande `countmap` renvoie un dictionnaire, qui associe chaque UUID au
 # nombre de fois ou il apparaît:
