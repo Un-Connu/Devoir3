@@ -219,7 +219,7 @@ Base.show(io::IO, ::MIME"text/plain", p::Population) = print(io, "Une population
 tick = 0
 maxlength = 2000
 budget= 21000
-distance = 25
+distance = 30
 
 # Mais nous allons aussi stocker tous les évènements d'infection qui ont lieu
 # pendant la simulation:
@@ -253,6 +253,11 @@ end
 
 test = 10
 suivi = zeros(3,10)
+population = Population(L, 3750)
+S = zeros(Int64, maxlength);
+I = zeros(Int64, maxlength);
+R = zeros(Int64, maxlength);
+
 
 for i in 1:test
 
