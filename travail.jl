@@ -264,7 +264,7 @@ dead = DeadAgent[]
 
 for i in 1:test
 
-    global tick, population, budget, distance
+    global tick, population, budget, distance, maxlength, S, I, R, events, eventsvaccin, dead
     ## Nous initialisons la simulation au temps 0, et nous allons la laisser se dérouler au plus 1000 pas de temps:
 
     tick = 0
@@ -295,7 +295,7 @@ for i in 1:test
     while (length(infectious(population)) != 0) & (tick < maxlength)
 
         ## On spécifie que nous utilisons les variables définies plus haut
-        global tick, population, budget, distance
+        global tick, population, budget, distance, maxlength, S, I, R, events, eventsvaccin, dead
         tick += 1
 
         ## On sélectionne les individus à surveiller dans l'anneau
