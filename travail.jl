@@ -64,10 +64,14 @@
 # Nous faisons l’hypothèse qu’une stratégie de dépistage et de vaccination ciblée autour
 # du premier décès, avec un rayon progressivement élargi, permettra de réduire 
 # efficacement la mortalité tout en optimisant l'utilisation du budget. De plus, nous supposons 
-# aussi que la mise en quarantaine de tous les individus dans l’anneau (infectés ou non) limitera 
+# aussi que la mise en quarantaine de tous les individus dans l’anneau limitera 
 # la propagation, avec une durée réduite pour les vaccinés. De plus, vacciner immédiatement les voisins
 # directs d’un cas détecté devrait freiner la transmission locale.
 
+# En gros, la stratégie consiste à tester les individus situés dans un cercle autour du premier décès. 
+# Si un individu est détecté positif, ses voisins immédiats sont vaccinés. Tous les individus dans l’anneau 
+# sont également placés en quarantaine, indépendamment de leur statut. Le rayon du cercle est progressivement 
+# augmenté afin d’élargir la zone d’intervention.
 # # Description du modèle
 
 # Nous utilisons un modèle basé sur des agents implémenté en Julia, où chaque
