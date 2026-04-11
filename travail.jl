@@ -65,6 +65,25 @@
 
 # # Description du modèle
 
+# Nous utilisons un modèle basé sur des agents implémenté en Julia, où chaque
+# individu est représenté par une structure `Agent` contenant sa position,
+# son état d’infection, son statut vaccinal et un compteur de survie.
+
+# Les agents évoluent dans une lattice bidimensionnelle (-50, 50) et se déplacent
+# aléatoirement à chaque pas de temps. La transmission se produit lorsqu’un agent
+# infectieux partage la même cellule qu’un agent susceptible, avec une probabilité
+# de 0.4.
+
+# Les individus infectieux voient leur compteur diminuer jusqu’à leur mort après
+# 21 jours. Les individus vaccinés deviennent protégés après un délai de deux
+# générations.
+
+# Les événements d’infection et de vaccination sont enregistrés, et des séries
+# temporelles (S, I, R) permettent de suivre la dynamique de l’épidémie.
+
+# Une stratégie d’intervention est appliquée après le premier décès, en ciblant
+# les individus autour du foyer d’infection afin de limiter la propagation.
+
 # # Code pour le modèle
 
 # Nous allons simuler le comportement d'une épidémie, qui se transmet par
