@@ -10,14 +10,14 @@
 #      prenom: Félix
 #      matricule: 20275312
 #      github: FelixDeCarufel
+#    - nom: Ranaivo Rajaonarisoa
+#      prenom: Ifaliana
+#      matricule: 20325981
+#      github: r-ifaliana
 #    - nom: Mouchaimech
 #      prenom: Kazem
-#      matricule: 20232897
-#      github: Kaz1711
-#    - nom: 
-#      prenom: 
-#      matricule:
-#      github:
+#      matricule:20232897
+#      github:Kaz1711
 # ---
 
 # # Introduction
@@ -26,7 +26,7 @@
 
 # Les maladies infectieuses asymtpomatiques représentent un défi majeur pour la
 # santé publique, car les individus infectés peuvent transmettre la maladie sans
-# être détectés, ce qui oblige les stratégies de contrôle à utiliser des tests
+# être détectés @Keeling_Eames_2005, ce qui oblige les stratégies de contrôle à utiliser des tests
 # de dépistage et les vaccins.
 
 # Dans ce travail, nous utilisons un modèle spatial basé sur des agents afin
@@ -61,9 +61,38 @@
 
 # ## Hypothèse et résultats attendus
 
-# Nous faisons l’hypothèse qu’une stratégie À AJOUTER !!!!!!!!!!
+# Nous faisons l’hypothèse qu’une stratégie de dépistage et de vaccination ciblée autour
+# du premier décès, avec un rayon progressivement élargi, permettra de réduire 
+# efficacement la mortalité tout en optimisant l'utilisation du budget. De plus, nous supposons 
+# aussi que la mise en quarantaine de tous les individus dans l’anneau limitera 
+# la propagation, avec une durée réduite pour les vaccinés. De plus, vacciner immédiatement les voisins
+# directs d’un cas détecté devrait freiner la transmission locale.
 
-# # Description du modèle
+# En gros, la stratégie consiste à tester les individus situés dans un cercle autour du premier décès. 
+# Si un individu est détecté positif, ses voisins immédiats sont vaccinés. Tous les individus dans l’anneau 
+# sont également placés en quarantaine, indépendamment de leur statut. Le rayon du cercle est progressivement 
+# augmenté afin d’élargir la zone d’intervention.
+
+# ## Description du modèle
+
+# Nous utilisons un modèle basé sur des agents implémenté en Julia @Eubank_2004 , où chaque
+# individu est représenté par une structure `Agent` contenant sa position,
+# son état d’infection, son statut vaccinal et un compteur de survie.
+
+# Les agents évoluent dans une lattice bidimensionnelle (-50, 50) et se déplacent
+# aléatoirement à chaque pas de temps. La transmission se produit lorsqu’un agent
+# infectieux partage la même cellule qu’un agent susceptible, avec une probabilité
+# de 0.4.
+
+# Les individus infectieux voient leur compteur diminuer jusqu’à leur mort après
+# 21 jours. Les individus vaccinés deviennent protégés après un délai de deux
+# générations.
+
+# Les événements d’infection et de vaccination sont enregistrés, et des séries
+# temporelles (S, I, R) permettent de suivre la dynamique de l’épidémie @Kermack_McKendrick_1927.
+
+# Une stratégie d’intervention est appliquée après le premier décès, en ciblant
+# les individus autour du foyer d’infection afin de limiter la propagation.
 
 # # Code pour le modèle
 
@@ -129,9 +158,10 @@ end
 
 L = Landscape(xmin=-50, xmax=50, ymin=-50, ymax=50)
 
-# ## Création de nouvelles fonctions
+# ## Création des fonctions
 
-#Méthode permettant de créer un agent à une position aléatoire dans le paysage
+# On va commencer par générer une fonction pour créer des agents au hasard, puis les placer dans le paysage. Pour ce faire, une 
+# nouvelle méthode à été ajoutée à la fonction rand().
 
 Random.rand(::Type{Agent}, L::Landscape) = Agent(x=rand(L.xmin:L.xmax), y=rand(L.ymin:L.ymax))
 
@@ -139,13 +169,6 @@ Random.rand(::Type{Agent}, L::Landscape) = Agent(x=rand(L.xmin:L.xmax), y=rand(L
 
 Random.rand(::Type{Agent}, L::Landscape, n::Int64) = [rand(Agent, L) for _ in 1:n]
 
-# Cette fonction nous permet donc de générer un nouvel agent dans un paysage:
-
-rand(Agent, L)
-
-# Mais aussi de générer plusieurs agents:
-
-rand(Agent, L, 3)
 
 # Fonction qui déplace un agent d'une case aléatoire dans la grille
 # si torus=true, les bords du paysage sont connectés (effet torus)
@@ -202,9 +225,8 @@ isquarantined(agent::Agent)= agent.quarantined
 # vérifier si un agent peut se déplacer:
 ismoving(agent::Agent)= !isquarantined(agent)
 
-# On peut maintenant définir une fonction pour prendre uniquement les agents qui
-# sont infectieux dans une population. Pour que ce soit clair, nous allons créer
-# un _alias_, `Population`, qui voudra dire `Vector{Agent}`:
+# Créations de fonctions qui permettent de sélectionner certains agents dans la poulation sur la base de leurs champs à l'aide des fonctions
+# définies précédemment.
 
 const Population = Vector{Agent}
 
@@ -225,9 +247,7 @@ quarantined(pop::Population)=filter(isquarantined, pop)
 
 incell(target::Agent, pop::Population) = filter(ag -> (ag.x, ag.y) == (target.x, target.y), pop)
 
-# ## Paramètres initiaux
-
-# Fonction permettant de créer une population initiale.
+# Création d'une fonction pour faciliter la génération de populations et simplification de son affichage.
 
 function Population(L::Landscape, n::Integer)
     return rand(Agent, L, n)
@@ -241,11 +261,13 @@ Base.show(io::IO, ::MIME"text/plain", p::Population) = print(io, "Une population
 
 tick = 0             # temps actuel de la simulation
 maxlength = 2000     # nombre maximal de générations
-budget= 21000        # budget total pour les tests et les vaccins
+budget = 21000        # budget total pour les tests et les vaccins
 distance = 25        # rayon de surveillance autour des agents morts
+test = 10            # nombre de simulations à réaliser
+taille = 3750        # nombre d'agents dans la population initiale
+contagion = 0.4      # probabilité de transmission par contact direct
 
 # Stockage des événements d'infection
-
 struct InfectionEvent
     time::Int64         # moment de l'infection
     from::UUIDs.UUID    # identifiant de l'agent infectieux
@@ -255,7 +277,6 @@ struct InfectionEvent
 end
 
 # Stockage des événements de vaccination
-
 struct VaccinEvent
     time::Int64         # moment de la vaccination
     to::UUIDs.UUID      # identifiant de l'agent vacciné
@@ -264,35 +285,39 @@ struct VaccinEvent
 end
 
 # Stockage des agents morts
-
 struct DeadAgent
     time::Int64         # moment de la mort
     to::UUIDs.UUID      # identifiant de l'agent mort
     x::Int64            # coordonnée x de la mort
     y::Int64            # coordonnée y de la mort
 end
-
-# Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
-# du bon type, et que nos `InfectionEvent` sont immutables.
+dead = DeadAgent[]
 
 # ## Simulation
-# nombre de simulations à faire
-test = 10            
 
-# Matrice pour stocker les résultats de chaque simulation
-suivi = zeros(3,10)
+#population = Population(L, taille)
+
+# Le nombre d'individus susceptibles, infecteux et remis seront suivis lors des générations
+
+S = zeros(Int64, maxlength);
+I = zeros(Int64, maxlength);
+R = zeros(Int64, maxlength);
+
+# La taille de la population vivante, de la population vaccinée et le budget seront enregistrés après chaque simulation
+
+suivi = zeros(3,test);
 
 for i in 1:test
 
-    # initilisation des paramètres globaux pour chaque simulation
+    global tick, population, budget, distance, maxlength, S, I, R, events, eventsvaccin, dead, contagion
+    
+    ## On s'assure de remettre le conteur de génération, la population et le budget à leur valeur initiale entre chaque simulation
 
-    tick = 0           # temps courant de la simulation
-    maxlength = 2000   # durée maximale de générations
-    budget= 21000      # budget total pour les tests et les vaccins
-    distance = 25      # rayon de surveillance autour d'un décès
+    tick = 0            # temps actuel de la simulation
+    budget= 21000       # budget total pour les tests et les vaccins
 
     # génération de la population initiale
-    population = Population(L, 3750)
+    population = Population(L, taille)
 
     # sélection aléatoire d'un agent pour être le patient zéro
     rand(population).infectious = true
@@ -303,10 +328,14 @@ for i in 1:test
     I = zeros(Int64, maxlength);
     R = zeros(Int64, maxlength);
 
+    ## Même chose pour les différents énènements
+
     # vecteurs permettant de stocker les événements de la simulation
     events = InfectionEvent[]
     eventsvaccin = VaccinEvent[]
     dead = DeadAgent[]
+
+    ## La simulation à lieu tant et aussi longtemps que la population n'est pas nulle et qu'on a pas atteint la limite de génération choisie
 
 
     # Boucle principale de la simulation
@@ -354,11 +383,13 @@ for i in 1:test
             end
         end
 
-        ## transmission de la maladie par contact direct
+        ## Les agents vaccinés ont une certaine chance d'infecter les agents sains non-vaccinés dans leur cellule
+
+    
         for agent in Random.shuffle(infectious(population))
             neighbors = healthy(incell(agent, population))
             for neighbor in neighbors
-                if rand() <= 0.4 && neighbor.vaccinated == false
+                if rand() <= contagion && neighbor.vaccinated == false
                     neighbor.infectious = true
                     push!(events, InfectionEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
                 end
@@ -368,8 +399,9 @@ for i in 1:test
         ## si un décès est observé, mise en place de la stratégie de vaccination
         if !isempty(dead) ## Si il y a un mort
    
-        ## test des agents sains sous surveillance
-            for agent in intersect(healthy(population), surveiller(population)) ## On ne peut pas utiliser && combiné avec "for agent in..."
+        ## Parmis les agents qui sont à surveiller, si ceux-ci sont sains il y a 5% de chances de faux positif. Si le budget le permet, un test 
+        ## est fait. Si ce dernier indique que les agents doivent être vaccinés et que le budget le permet, ils le seront.  
+            for agent in intersect(healthy(population), surveiller(population)) ## On ne peut pas utiliser && combiné avec "for agent in...", ça renvoit un code d'erreur
                 if budget >= 4
                     budget-=4
                 
@@ -394,8 +426,9 @@ for i in 1:test
                     end
                 end
             end
-
-            ## test des agents infectieux sous surveillance
+        
+        ## Parmis les agents qui sont à surveiller, si ceux-ci sont contagieux, il y a 5% de chances de faux négatif. Si le budget le permet,
+        ## un test est fait. Si ce dernier indique que les agents doivent être vaccinés et que le budget le permet, ils le seront.  
             for agent in intersect(infectious(population), surveiller(population))
                 if budget >= 4
                     budget-=4
