@@ -176,18 +176,18 @@ Random.rand(::Type{Agent}, L::Landscape, n::Int64) = [rand(Agent, L) for _ in 1:
 
 function move!(A::Agent, L::Landscape; torus=true)
 
-    # déplacement aléatoire
+    ## déplacement aléatoire
     A.x += rand(-1:1)
     A.y += rand(-1:1)
 
     if torus
-        # effet torus: les agents qui sortent d'un bord réapparaissent de l'autre côté
+        ## effet torus: les agents qui sortent d'un bord réapparaissent de l'autre côté
         A.y = A.y < L.ymin ? L.ymax : A.y
         A.x = A.x < L.xmin ? L.xmax : A.x
         A.y = A.y > L.ymax ? L.ymin : A.y
         A.x = A.x > L.xmax ? L.xmin : A.x
     else
-        # limite classique: les agents restent dans les limites du paysage
+        ## limite classique: les agents restent dans les limites du paysage
         A.y = A.y < L.ymin ? L.ymin : A.y
         A.x = A.x < L.xmin ? L.xmin : A.x
         A.y = A.y > L.ymax ? L.ymax : A.y
@@ -316,21 +316,21 @@ for i in 1:test
     tick = 0            # temps actuel de la simulation
     budget= 21000       # budget total pour les tests et les vaccins
 
-    # génération de la population initiale
+    ## génération de la population initiale
     population = Population(L, taille)
 
-    # sélection aléatoire d'un agent pour être le patient zéro
+    ## sélection aléatoire d'un agent pour être le patient zéro
     rand(population).infectious = true
 
-    # Tableaux pour suivre l'évolution de la population
-    # S= susceptibles, I=infectieux, R=recovered
+    ## Tableaux pour suivre l'évolution de la population
+    ## S= susceptibles, I=infectieux, R=recovered
     S = zeros(Int64, maxlength);
     I = zeros(Int64, maxlength);
     R = zeros(Int64, maxlength);
 
     ## Même chose pour les différents énènements
 
-    # vecteurs permettant de stocker les événements de la simulation
+    ## vecteurs permettant de stocker les événements de la simulation
     events = InfectionEvent[]
     eventsvaccin = VaccinEvent[]
     dead = DeadAgent[]
@@ -338,7 +338,7 @@ for i in 1:test
     ## La simulation à lieu tant et aussi longtemps que la population n'est pas nulle et qu'on a pas atteint la limite de génération choisie
 
 
-    # Boucle principale de la simulation
+    ## Boucle principale de la simulation
     while (length(infectious(population)) != 0) & (tick < maxlength)
 
         ## Mise à jour du temps de la simulation
@@ -552,5 +552,14 @@ scatter(t, last.(pos), color=:black, alpha=0.5)
 
 # ## Discussion
 # ### Limitations du modèles
+# Ce modèle présente plusieurs limitates importantes. Tout d'abord, la transmission de la
+# maladie est simplifiée, car elle dépend uniquement du contact direct entre agents situés
+# dans la même cellule. En réalité, les interactions sociales sont plus complexes et ne sont
+# pas strictement locales.
 
+# De plus, le vaccin est considéré comme parfaitement efficace après un délai fixe de deux
+# jours, ce qui ne reflète pas la variabilité réelle de la réponse immunitaire entre individus.
+
+# Le modèle suppose également une durée d'infection fixe pour tous les agents, alors que dans
+# la réalité, cette durée peut varier selon les individus.
 # # Références
