@@ -1,63 +1,9 @@
 # Dépôt modèle pour le cours BIO 2045
 
-<!-- Vous devrez supprimer les instructions, incluant ce commentaire -->
-
-⚠️ **Important**: Le document compilé (`travail.pdf`) se trouve à `username.github.io/nom_du_repo/travail.pdf`
-
-⚠️ **Important**: Vous devrez mettre à jour le document `README.md`, pour enlever les instructions d'installation, et ajouter les informations pertinentes pour le projet
-
-⚠️ **Important**: Vous devrez utiliser le document `travail.jl` pour écrire votre code / rapport, et **vous ne pouvez pas le renommer**
-
-ℹ️ **Information**: [Guide d'utilisation de markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
-
-ℹ️ **Information**: Les références doivent aller dans le fichier `references.bib` au format bibtex, qui peut être généré par [Zotero](https://www.zotero.org/) ou [zoterobib](https://zbib.org/)
-
-_Pour utiliser ce modèle, vous devez utiliser l'option "Use this template", puis "Create a new repository"_
-
-![Capture d'écran de l'option "Utiliser ce modèle"](.assets/scrot-use-this-template.png)
-
-_Vous devrez ensuite vous assurer que l'option "Include all branches" est cochée, puis choisir le nom du dépôt, et vous assurer qu'il soit visible, avant de le publier_
-
-![Capture d'écran de la création du nouveau dépôt](.assets/scrot-pathway.png)
-
-_Une fois que le dépôt est créé, vous devrez ajouter quelques informations à votre dépôt_
-
-![Capture d'écran de la création du nouveau dépôt](.assets/scrot-options.png)
-
-_Les informations doivent être les suivantes. Les tags `bio2045` et `h26-devoir2` (ou `h26-devoir3`) sont essentiels!_
-
-![Capture d'écran de la création du nouveau dépôt](.assets/scrot-options.png)
-
-_Vous devrez mettre à jour les options dans le menu "Pages" - la source doit être GitHub Actions_
-
-![Capture d'écran de la création du nouveau dépôt](.assets/scrot-pages.png)
-
----
-
-⚠️ **Important**: Ce projet a été mis à jour pour le devoir 3.
-
-Les pull request font maintenant une vérification du code:
-
-![Code vérification](.assets/scrot-verif.png)
-
-Vous pouvez attendre que cette vérification soit faite avant de merger la pull
-request. Cette vérification est _plus stricte_ que la génération du PDF, et
-renvoie un message en cas d'erreur. Si cette vérification se termine avec
-succès, votre code peut s'éxécuter. Si cette vérification échoue, vous pouvez
-cliquer sur l'erreur pour voir la raison.
-
-En parallèle, la pull request va aussi générer le PDF tel qu'il serait produit
-après avoir été inclus dans la branche vers laquelle vous envoyez les
-changements. Quand la génération du PDF est terminée, un nouveau message sera
-ajouté à la pull request.
-
-![Code vérification](.assets/scrot-compile.png)
-
-<!-- Vous devrez supprimer jusqu'à, et incluant ce commentaire -->
-
 ## Organisation du projet
 
 ## Consignes
+
 Modifiez le modèle sur la dynamique épidémique pour simuler une campagne de vaccination.
 
 Vous devrez travailler avec les contraintes suivantes:
@@ -146,3 +92,27 @@ La discussion des résultats revient sur les concepts abordés dans l'introducti
 Les limites du modèle sont discutées dans le contexte spécifique de maladies infectieuses identifiées, et cette discussion à la littérature scientifique (6 points)
 
 Toutes les figures du rapport sont nécessaires (3 points)
+
+## Résumé du projet 
+
+Ce projet présente une simulation stochastique d’une épidémie à l’aide d’un modèle basé sur des agents implémenté en Julia. Chaque individu de la population est représenté par un agent évoluant sur une grille bidimensionnelle, pouvant être susceptible, infectieux ou vacciné.
+
+La maladie se transmet par contact direct avec une probabilité fixe, et les individus infectieux ont une durée de vie limitée. Les cas sont asymptomatiques, ce qui impose l’utilisation de tests de dépistage pour identifier les infections.
+
+Le modèle intègre également une stratégie d’intervention avec dépistage, vaccination et quarantaine, qui commence après la détection du premier décès. Cette stratégie vise les individus dans un rayon autour du foyer d’infection. Les contraintes principales du modèle sont :
+
+- un budget limité pour les tests et la vaccination,
+- une efficacité parfaite du vaccin après un délai de 2 jours,
+- une mortalité systématique des individus infectés après une durée fixe.
+
+L’objectif de la simulation est d’évaluer quelle stratégie de dépistage et de vaccination permet de minimiser la mortalité sous contraintes budgétaires.
+
+## Répartition du travail
+Félix De Carufel
+Contribution principale au code de simulation et à son explication.
+Younes Benbezza
+Contribution principale au code de simulation et à son explication.
+Ifaliana Ranaivo Rajaonoarisoa
+Rédaction de l’introduction et du README.
+Kazem
+Documentation des fonctions et rédaction de la section résultats.
