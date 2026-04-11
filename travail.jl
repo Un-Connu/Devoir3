@@ -16,8 +16,8 @@
 #      github: r-ifaliana
 #    - nom: Mouchaimech
 #      prenom: Kazem
-#      matricule:20232897
-#      github:Kaz1711
+#      matricule: 20232897
+#      github: Kaz1711
 # ---
 
 # # Introduction
