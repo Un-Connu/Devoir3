@@ -72,7 +72,8 @@
 # Si un individu est détecté positif, ses voisins immédiats sont vaccinés. Tous les individus dans l’anneau 
 # sont également placés en quarantaine, indépendamment de leur statut. Le rayon du cercle est progressivement 
 # augmenté afin d’élargir la zone d’intervention.
-# # Description du modèle
+
+# ## Description du modèle
 
 # Nous utilisons un modèle basé sur des agents implémenté en Julia @Eubank_2004 , où chaque
 # individu est représenté par une structure `Agent` contenant sa position,
