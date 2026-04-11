@@ -10,10 +10,10 @@
 #      prenom: Félix
 #      matricule: 20275312
 #      github: FelixDeCarufel
-#    - nom: 
-#      prenom: 
-#      matricule:
-#      github:
+#    - nom: Ranaivo Rajaonarisoa
+#      prenom: Ifaliana
+#      matricule: 20325981
+#      github: r-ifaliana
 #    - nom: 
 #      prenom: 
 #      matricule:
