@@ -187,7 +187,7 @@ Base.show(io::IO, ::MIME"text/plain", p::Population) = print(io, "Une population
 
 # Notre simulation commence au temps 0 et se déroule sur une durée maximale de 2000 générations. On accorde un budget de "budget" afin de
 # tester et vacciner les agents dans un rayon de "distance" autour du premier mort. La simulations sera générée un certain nombre de fois, soit
-# "test" avec une taille définie par "taille".
+# "test" avec une taille définie par "taille". La probabilité de transmission est définie par "contagion"
 
 tick = 0
 maxlength = 2000
@@ -195,6 +195,7 @@ budget= 21000
 distance = 25
 test = 10
 taille = 3750
+contagion = 0.4
 
 # ## Création de structures
 
@@ -226,14 +227,12 @@ struct DeadAgent
 end
 dead = DeadAgent[]
 
-# Notez qu'on a contraint notre vecteur `events` a ne contenir _que_ des valeurs
-# du bon type, et que nos `InfectionEvent` sont immutables.
-
 # ## Simulation
 
-population = Population(L, taille)
+#population = Population(L, taille)
 
 # Le nombre d'individus susceptibles, infecteux et remis seront suivis lors des générations
+
 S = zeros(Int64, maxlength);
 I = zeros(Int64, maxlength);
 R = zeros(Int64, maxlength);
@@ -244,46 +243,43 @@ suivi = zeros(3,test);
 
 for i in 1:test
 
-    global tick, population, budget, distance, maxlength, S, I, R, events, eventsvaccin, dead
-    ## Nous initialisons la simulation au temps 0, et nous allons la laisser se dérouler au plus 1000 pas de temps:
+    global tick, population, budget, distance, maxlength, S, I, R, events, eventsvaccin, dead, contagion
+    
+    ## On s'assure de remettre le conteur de génération, la population et le budget à leur valeur initiale entre chaque simulation
 
     tick = 0
-    maxlength = 2000
     budget= 21000
-    distance = 25
-
-    ## Et on génère notre population initiale:
-
     population = Population(L, taille)
 
-    ## Pour commencer la simulation, il faut identifier un cas index, que nous allons
-    ## choisir au hasard dans la population:
+    ## Le premier individu infecté est choisi aléatoirement
 
     rand(population).infectious = true
-    ## Pour étudier les résultats de la simulation, nous allons stocker la taille de
-    ## populations à chaque pas de temps:
+
+    ## Le nombre d'individus susceptibles, infecteux et remis seront suivis lors des générations sont aussi remis à leur valeur initiale
 
     S = zeros(Int64, maxlength);
     I = zeros(Int64, maxlength);
     R = zeros(Int64, maxlength);
 
+    ## Même chose pour les différents énènements
+
     events = InfectionEvent[]
     eventsvaccin = VaccinEvent[]
-
     dead = DeadAgent[]
+
+    ## La simulation à lieu tant et aussi longtemps que la population n'est pas nulle et qu'on a pas atteint la limite de génération choisie
 
     while (length(infectious(population)) != 0) & (tick < maxlength)
 
         ## On spécifie que nous utilisons les variables définies plus haut
+
         global tick, population, budget, distance, maxlength, S, I, R, events, eventsvaccin, dead
         tick += 1
 
-        ## On sélectionne les individus à surveiller dans l'anneau
-
-        ## On place tous les agents morts dans le vecteur dead
-        
         if !isempty(dead)   ## Si dead n'est pas vide, on mesure la distance entre le mort et chaque agents
         centre = dead[1] ## Puisque dead peut comprendre plus qu'un mort, on prend seulement le premier
+
+        ## On met en quarantaine les agents qui sont à moins d'une certaine ditance du premier mort. Ceux-ci seront à tester et vacciner si nécessaire
 
             for agent in population
                 if ((agent.x - centre.x)^2 + (agent.y - centre.y)^2) <= (distance)^2
@@ -293,17 +289,20 @@ for i in 1:test
             end
         end
 
-        ## Movement
+        ## Chaque agent qui n'est pas en quarantaine se déplace à chaque génération
+
         for agent in moving(population)
             move!(agent, L; torus=false)
         end    
 
-        ## Change in survival
+        ## Les agents infectés ont une espérence de vie limitée
+        
         for agent in infectious(population)
             agent.clock -= 1
         end
 
-        ## Change in vaccination effect
+        ## Le vaccin prend 2 jours à agir. Une fois que le vaccin fait effet, les agents ne sont plus en quarantaine
+
         for agent in vaccinated(population)
             if tick >= (agent.timevacc)+2
                 agent.infectious=false
@@ -319,21 +318,24 @@ for i in 1:test
             end
         end
 
+        ## Les agents vaccinés ont une certaine chance d'infecter les agents sains non-vaccinés dans leur cellule
+
         for agent in Random.shuffle(infectious(population))
             neighbors = healthy(incell(agent, population))
             for neighbor in neighbors
-                if rand() <= 0.4 && neighbor.vaccinated == false
+                if rand() <= contagion && neighbor.vaccinated == false
                     neighbor.infectious = true
                     push!(events, InfectionEvent(tick, agent.id, neighbor.id, agent.x, agent.y))
                 end
             end
         end
 
-        if !isempty(dead) ## Si il y a un mort
+        if !isempty(dead)   ## Lorsqu'il y a au moins un agent de mort
    
-        ## test RAT
+        ## Parmis les agents qui sont à surveiller, si ceux-ci sont sains il y a 5% de chances de faux positif. Si le budget le permet, un test 
+        ## est fait. Si ce dernier indique que les agents doivent être vaccinés et que le budget le permet, ils le seront.  
 
-            for agent in intersect(healthy(population), surveiller(population)) ## On ne peut pas utiliser && combiné avec "for agent in..."
+            for agent in intersect(healthy(population), surveiller(population)) ## On ne peut pas utiliser && combiné avec "for agent in...", ça renvoit un code d'erreur
                 if budget >= 4
                     budget-=4
                 
@@ -357,6 +359,8 @@ for i in 1:test
                 end
             end
         
+        ## Parmis les agents qui sont à surveiller, si ceux-ci sont contagieux, il y a 5% de chances de faux négatif. Si le budget le permet,
+        ## un test est fait. Si ce dernier indique que les agents doivent être vaccinés et que le budget le permet, ils le seront.  
             for agent in intersect(infectious(population), surveiller(population))
                 if budget >= 4
                     budget-=4
@@ -381,7 +385,7 @@ for i in 1:test
 
         end
 
-        ## Remove agents that died
+        ## Les agents morts sont retirés de la population
     
         for agent in population
             if agent.clock < 0
@@ -390,14 +394,15 @@ for i in 1:test
             end
         end
 
-        ## Store population size
+        ## Le suivi des populations saines, infectées et rétablies a lieu
+
         S[tick] = length(filter(isunvaccinated,healthy(population)))
         I[tick] = length(infectious(population))
         R[tick] = length(filter(isvaccinated,healthy(population)))
 
     end
 
-    ## Store information
+    ## La taille de la population vivante, de la population vaccinée et le budget restant sont enregistrés après chaque simulation
 
     suivi[1, i] = length(population)
     suivi[2, i] = length(vaccinated(population))
@@ -449,6 +454,7 @@ length(infxn_by_uuid)
 length(vaccincount)
 length(population)
 length(surveiller(population))
+
 # Pour savoir combien de fois chaque nombre d'infections apparaît, il faut
 # utiliser `countmap` une deuxième fois:
 
