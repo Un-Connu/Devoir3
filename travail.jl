@@ -61,7 +61,12 @@
 
 # ## Hypothèse et résultats attendus
 
-# Nous faisons l’hypothèse qu’une stratégie À AJOUTER !!!!!!!!!!
+# Nous faisons l’hypothèse qu’une stratégie de dépistage et de vaccination ciblée autour
+# du premier décès, avec un rayon progressivement élargi, permettra de réduire 
+# efficacement la mortalité tout en optimisant l'utilisation du budget. De plus, nous supposons 
+# aussi que la mise en quarantaine de tous les individus dans l’anneau (infectés ou non) limitera 
+# la propagation, avec une durée réduite pour les vaccinés. De plus, vacciner immédiatement les voisins
+# directs d’un cas détecté devrait freiner la transmission locale.
 
 # # Description du modèle
 
