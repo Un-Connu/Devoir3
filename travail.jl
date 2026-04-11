@@ -26,7 +26,7 @@
 
 # Les maladies infectieuses asymtpomatiques représentent un défi majeur pour la
 # santé publique, car les individus infectés peuvent transmettre la maladie sans
-# être détectés, ce qui oblige les stratégies de contrôle à utiliser des tests
+# être détectés @Keeling_Eames_2005, ce qui oblige les stratégies de contrôle à utiliser des tests
 # de dépistage et les vaccins.
 
 # Dans ce travail, nous utilisons un modèle spatial basé sur des agents afin
@@ -74,7 +74,7 @@
 # augmenté afin d’élargir la zone d’intervention.
 # # Description du modèle
 
-# Nous utilisons un modèle basé sur des agents implémenté en Julia, où chaque
+# Nous utilisons un modèle basé sur des agents implémenté en Julia @Eubank_2004 , où chaque
 # individu est représenté par une structure `Agent` contenant sa position,
 # son état d’infection, son statut vaccinal et un compteur de survie.
 
@@ -88,7 +88,7 @@
 # générations.
 
 # Les événements d’infection et de vaccination sont enregistrés, et des séries
-# temporelles (S, I, R) permettent de suivre la dynamique de l’épidémie.
+# temporelles (S, I, R) permettent de suivre la dynamique de l’épidémie @Kermack_McKendrick_1927.
 
 # Une stratégie d’intervention est appliquée après le premier décès, en ciblant
 # les individus autour du foyer d’infection afin de limiter la propagation.
