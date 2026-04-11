@@ -170,10 +170,23 @@ Random.rand(::Type{Agent}, L::Landscape) = Agent(x=rand(L.xmin:L.xmax), y=rand(L
 Random.rand(::Type{Agent}, L::Landscape, n::Int64) = [rand(Agent, L) for _ in 1:n]
 
 
-# Fonction qui déplace un agent d'une case aléatoire dans la grille
-# si torus=true, les bords du paysage sont connectés (effet torus)
-# sinon, les agents restent dans les limites du paysage
+"""
+    move!(A::Agent, L::Landscape; torus=true)
 
+Déplace un agent d'une case aléatoire dans le paysage.
+
+Si `torus=true`, les bords du paysage sont connectés, créant un effet de tore:
+un agent qui sort d'un côté réapparaît de l'autre côté.
+Sinon, les agents restent dans les limites du paysage.
+
+Arguments:
+- A : l'agent à déplacer
+- L :  le paysage dans lequel l'agent évolue
+- torus : indique si les bords du paysage sont connectés (par défaut: true)
+
+Retour:
+L'agent déplacé
+"""
 function move!(A::Agent, L::Landscape; torus=true)
 
     ## déplacement aléatoire
@@ -247,8 +260,18 @@ quarantined(pop::Population)=filter(isquarantined, pop)
 
 incell(target::Agent, pop::Population) = filter(ag -> (ag.x, ag.y) == (target.x, target.y), pop)
 
-# Création d'une fonction pour faciliter la génération de populations et simplification de son affichage.
+"""
+    Population(L::Landscape, n::Integer)
 
+Génère une population de `n` agents placés aléatoirement dans le paysage `L`.
+
+Arguments:
+- L : le paysage dans lequel les agents évoluent
+- n : le nombre d'agents à créer
+
+Retour:
+un vecteur contenant les agents générés
+"""
 function Population(L::Landscape, n::Integer)
     return rand(Agent, L, n)
 end
