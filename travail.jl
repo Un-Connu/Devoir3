@@ -10,10 +10,10 @@
 #      prenom: Félix
 #      matricule: 20275312
 #      github: FelixDeCarufel
-#    - nom: 
-#      prenom: 
-#      matricule:
-#      github:
+#    - nom: Ranaivo Rajaonarisoa
+#      prenom: Ifaliana
+#      matricule: 20325981
+#      github: r-ifaliana
 #    - nom: 
 #      prenom: 
 #      matricule:
@@ -61,9 +61,33 @@
 
 # ## Hypothèse et résultats attendus
 
-# Nous faisons l’hypothèse qu’une stratégie À AJOUTER !!!!!!!!!!
+# Nous faisons l’hypothèse qu’une stratégie de dépistage et de vaccination ciblée autour
+# du premier décès, avec un rayon progressivement élargi, permettra de réduire 
+# efficacement la mortalité tout en optimisant l'utilisation du budget. De plus, nous supposons 
+# aussi que la mise en quarantaine de tous les individus dans l’anneau (infectés ou non) limitera 
+# la propagation, avec une durée réduite pour les vaccinés. De plus, vacciner immédiatement les voisins
+# directs d’un cas détecté devrait freiner la transmission locale.
 
 # # Description du modèle
+
+# Nous utilisons un modèle basé sur des agents implémenté en Julia, où chaque
+# individu est représenté par une structure `Agent` contenant sa position,
+# son état d’infection, son statut vaccinal et un compteur de survie.
+
+# Les agents évoluent dans une lattice bidimensionnelle (-50, 50) et se déplacent
+# aléatoirement à chaque pas de temps. La transmission se produit lorsqu’un agent
+# infectieux partage la même cellule qu’un agent susceptible, avec une probabilité
+# de 0.4.
+
+# Les individus infectieux voient leur compteur diminuer jusqu’à leur mort après
+# 21 jours. Les individus vaccinés deviennent protégés après un délai de deux
+# générations.
+
+# Les événements d’infection et de vaccination sont enregistrés, et des séries
+# temporelles (S, I, R) permettent de suivre la dynamique de l’épidémie.
+
+# Une stratégie d’intervention est appliquée après le premier décès, en ciblant
+# les individus autour du foyer d’infection afin de limiter la propagation.
 
 # # Code pour le modèle
 
