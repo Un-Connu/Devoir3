@@ -112,13 +112,13 @@ using StatsBase
 # fixe la génération des nombres aléatoire pour que les simulations soient reproductibles.
 
 import Random
-Random.seed!(1234)
+Random.seed!(1234);
 
 # Puisque nous allons identifier des agents, nous utiliserons des UUIDs pour
 # leur donner un indentifiant unique:
 
 import UUIDs
-UUIDs.uuid4()
+UUIDs.uuid4();
 
 # ## Création des types
 
@@ -139,7 +139,7 @@ Base.@kwdef mutable struct Agent
     surveiller::Bool = false           ## indique si l'agent est surveillé
     quarantined::Bool = false          ## indique si l'agent est en quarantaine
     id::UUIDs.UUID = UUIDs.uuid4()     ## identifiant unique de l'agent
-end
+end;
 
 # structure representant le paysage dans lequel les agents se déplacent
 # le paysage est défini par des limites sur x et y
@@ -149,11 +149,11 @@ Base.@kwdef mutable struct Landscape
     xmax::Int64 = 25
     ymin::Int64 = -25
     ymax::Int64 = 25
-end
+end;
 
 # création du paysage initial:
 
-L = Landscape(xmin=-50, xmax=50, ymin=-50, ymax=50)
+L = Landscape(xmin=-50, xmax=50, ymin=-50, ymax=50);
 
 # ## Création des fonctions
 
@@ -209,60 +209,62 @@ function move!(A::Agent, L::Landscape; torus=true)
         A.x = A.x > L.xmax ? L.xmax : A.x
     end
     return A
-end
+end;
 
 # Nous pouvons maintenant définir des fonctions qui vont nous permettre de nous
 # simplifier la rédaction du code:
 
 # vérifier si un agent est infectieux:
 
-isinfectious(agent::Agent) = agent.infectious
+isinfectious(agent::Agent) = agent.infectious;
 
 # vérifier si un agent est sain:
 
-ishealthy(agent::Agent) = !isinfectious(agent)
+ishealthy(agent::Agent) = !isinfectious(agent);
 
 # vérifier si un agent est vacciné:
 
-isvaccinated(agent::Agent) = agent.vaccinated
+isvaccinated(agent::Agent) = agent.vaccinated;
 
 # vérifier si un agent est non vacciné:
 
-isunvaccinated(agent::Agent)=!isvaccinated(agent)
+isunvaccinated(agent::Agent)=!isvaccinated(agent);
 
 # vérifier si un agent est surveillé:
 
-issurveiller(agent::Agent)= agent.surveiller
+issurveiller(agent::Agent)= agent.surveiller;
 
 # vérifier si un agent est en quarantaine:
 
-isquarantined(agent::Agent)= agent.quarantined
+isquarantined(agent::Agent)= agent.quarantined;
 
 # vérifier si un agent peut se déplacer:
 
-ismoving(agent::Agent)= !isquarantined(agent)
+ismoving(agent::Agent)= !isquarantined(agent);
 
 # Créations de fonctions qui permettent de sélectionner certains agents dans la poulation sur la base de leurs champs à l'aide des fonctions
 # définies précédemment.
 
-const Population = Vector{Agent}
+const Population = Vector{Agent};
 
 # Fonctions permettant de filtrer les agents d'une population selon leur état
 # Chaque fonction retourne un sous-ensemble de la population contenant uniquement
 # les agents qui satisfont la condition:
 
-infectious(pop::Population) = filter(isinfectious, pop)
-healthy(pop::Population) = filter(ishealthy, pop)
-vaccinated(pop::Population) = filter(isvaccinated, pop)
-unvaccinated(pop::Population)=filter(isunvaccinated, pop)
-surveiller(pop::Population)=filter(issurveiller, pop)
-moving(pop::Population)=filter(ismoving, pop)
-quarantined(pop::Population)=filter(isquarantined, pop)
+infectious(pop::Population) = filter(isinfectious, pop);
+healthy(pop::Population) = filter(ishealthy, pop);
+vaccinated(pop::Population) = filter(isvaccinated, pop);
+unvaccinated(pop::Population)=filter(isunvaccinated, pop);
+surveiller(pop::Population)=filter(issurveiller, pop);
+moving(pop::Population)=filter(ismoving, pop);
+quarantined(pop::Population)=filter(isquarantined, pop);
 
 # Fonction qui retourne les agents qui sont dans la même cellule que l'agent cible.
 # Cela permet d'idetifier les agents qui peuvent entrer en contact direct avec cette cible.
 
-incell(target::Agent, pop::Population) = filter(ag -> (ag.x, ag.y) == (target.x, target.y), pop)
+incell(target::Agent, pop::Population) = filter(ag -> (ag.x, ag.y) == (target.x, target.y), pop);
+
+# Fonction permettant de créer la population total
 
 """
     Population(L::Landscape, n::Integer)
@@ -278,7 +280,7 @@ un vecteur contenant les agents générés
 """
 function Population(L::Landscape, n::Integer)
     return rand(Agent, L, n)
-end
+end;
 
 # Fonction permettant d'afficher une population d'une manière plus lisible dans la console.
 
@@ -286,13 +288,13 @@ Base.show(io::IO, ::MIME"text/plain", p::Population) = print(io, "Une population
 
 # Paramètres globaux de la simulation:
 
-tick = 0             ## temps actuel de la simulation
-maxlength = 2000     ## nombre maximal de générations
-budget = 21000       ## budget total pour les tests et les vaccins
-distance = 25        ## rayon de surveillance autour des agents morts
-test = 10            ## nombre de simulations à réaliser
-taille = 3750        ## nombre d'agents dans la population initiale
-contagion = 0.4      ## probabilité de transmission par contact direct
+tick = 0;             ## temps actuel de la simulation
+maxlength = 2000;     ## nombre maximal de générations
+budget = 21000;       ## budget total pour les tests et les vaccins
+distance = 25;        ## rayon de surveillance autour des agents morts
+test = 10;            ## nombre de simulations à réaliser
+taille = 3750;        ## nombre d'agents dans la population initiale
+contagion = 0.4;      ## probabilité de transmission par contact direct
 
 # Stockage des événements d'infection
 
@@ -302,7 +304,7 @@ struct InfectionEvent
     to::UUIDs.UUID      ## identifiant de l'agent infecté
     x::Int64            ## coordonnée x de l'infection
     y::Int64            ## coordonnée y de l'infection
-end
+end;
 
 # Stockage des événements de vaccination
 
@@ -311,7 +313,7 @@ struct VaccinEvent
     to::UUIDs.UUID      ## identifiant de l'agent vacciné
     x::Int64            ## coordonnée x de la vaccination
     y::Int64            ## coordonnée y de la vaccination
-end
+end;
 
 # Stockage des agents morts
 
@@ -320,8 +322,8 @@ struct DeadAgent
     to::UUIDs.UUID      ## identifiant de l'agent mort
     x::Int64            ## coordonnée x de la mort
     y::Int64            ## coordonnée y de la mort
-end
-dead = DeadAgent[]
+end;
+dead = DeadAgent[];
 
 # ## Simulation
 
@@ -556,19 +558,11 @@ infxn_by_uuid = countmap([event.from for event in events]);
 
 # compter le nombre de vaccination
 
-vaccincount = countmap([event.to for event in eventsvaccin]);
-
-# La commande `countmap` renvoie un dictionnaire, qui associe chaque UUID au
-# nombre de fois ou il apparaît:
-
-length(infxn_by_uuid)            ## nombre d'agents ayant causé au moins une infection
-length(vaccincount)              ## nombre d'agents ayant été vaccinés
-length(population)               ## taille finale de la population
-length(surveiller(population))   ## nombre d'agents ayant été mis en surveillance
+vaccincount = countmap([event.to for event in eventsvaccin]); ## La commande `countmap` renvoie un dictionnaire, qui associe chaque UUID au nombre de fois ou il apparaît:
 
 # distribution du nombre d'infections causées par les agents infectieux:
 
-nb_inxfn = countmap(values(infxn_by_uuid))
+nb_inxfn = countmap(values(infxn_by_uuid));
 
 # visualidation de la distribution du nombre d'infections causées par les agents infectieux
 
