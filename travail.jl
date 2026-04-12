@@ -1,6 +1,6 @@
 # ---
-# title: 
-# repository: 
+# title: Gestion de zombies
+# repository: Un-Connu/Devoir3
 # auteurs:
 #    - nom: Benbezza
 #      prenom: Younes
@@ -109,7 +109,8 @@ CairoMakie.activate!(px_per_unit=6.0)
 
 using StatsBase
 
-# fixe la graine pour que les simulations soient reproductibles.
+# fixe la génération des nombres aléatoire pour que les simulations soient reproductibles.
+
 import Random
 Random.seed!(1234)
 
@@ -129,20 +130,16 @@ UUIDs.uuid4()
 # - des états booléens indiquant si l'agent est infectieux, vacciné, surveillé ou en quarantaine
 
 Base.@kwdef mutable struct Agent
-    x::Int64 = 0                       # position x de l'agent
-    y::Int64 = 0                       # position y de l'agent
-    clock::Int64 = 20                  # durée restante de l'infection (en jours)
-    timevacc::Int64 = 0                # moment ou le vaccin a été administré
-    infectious::Bool = false           # indique si l'agent est infecté
-    vaccinated::Bool = false           # indique si l'agent est vacciné
-    surveiller::Bool = false           # indique si l'agent est surveillé
-    quarantined::Bool = false          # indique si l'agent est en quarantaine
-    id::UUIDs.UUID = UUIDs.uuid4()     # identifiant unique de l'agent
+    x::Int64 = 0                       ## position x de l'agent
+    y::Int64 = 0                       ## position y de l'agent
+    clock::Int64 = 20                  ## durée restante de l'infection (en jours)
+    timevacc::Int64 = 0                ## moment ou le vaccin a été administré
+    infectious::Bool = false           ## indique si l'agent est infecté
+    vaccinated::Bool = false           ## indique si l'agent est vacciné
+    surveiller::Bool = false           ## indique si l'agent est surveillé
+    quarantined::Bool = false          ## indique si l'agent est en quarantaine
+    id::UUIDs.UUID = UUIDs.uuid4()     ## identifiant unique de l'agent
 end
-
-# On peut créer un agent pour vérifier:
-
-Agent()
 
 # structure representant le paysage dans lequel les agents se déplacent
 # le paysage est défini par des limites sur x et y
@@ -190,17 +187,22 @@ L'agent déplacé
 function move!(A::Agent, L::Landscape; torus=true)
 
     ## déplacement aléatoire
+
     A.x += rand(-1:1)
     A.y += rand(-1:1)
 
     if torus
+
         ## effet torus: les agents qui sortent d'un bord réapparaissent de l'autre côté
+
         A.y = A.y < L.ymin ? L.ymax : A.y
         A.x = A.x < L.xmin ? L.xmax : A.x
         A.y = A.y > L.ymax ? L.ymin : A.y
         A.x = A.x > L.xmax ? L.xmin : A.x
     else
+
         ## limite classique: les agents restent dans les limites du paysage
+
         A.y = A.y < L.ymin ? L.ymin : A.y
         A.x = A.x < L.xmin ? L.xmin : A.x
         A.y = A.y > L.ymax ? L.ymax : A.y
@@ -209,14 +211,11 @@ function move!(A::Agent, L::Landscape; torus=true)
     return A
 end
 
-# On test et vaccine les gens dans un disque autour du premier mort
-
-
-
 # Nous pouvons maintenant définir des fonctions qui vont nous permettre de nous
 # simplifier la rédaction du code:
 
 # vérifier si un agent est infectieux:
+
 isinfectious(agent::Agent) = agent.infectious
 
 # vérifier si un agent est sain:
@@ -224,18 +223,23 @@ isinfectious(agent::Agent) = agent.infectious
 ishealthy(agent::Agent) = !isinfectious(agent)
 
 # vérifier si un agent est vacciné:
+
 isvaccinated(agent::Agent) = agent.vaccinated
 
 # vérifier si un agent est non vacciné:
+
 isunvaccinated(agent::Agent)=!isvaccinated(agent)
 
 # vérifier si un agent est surveillé:
+
 issurveiller(agent::Agent)= agent.surveiller
 
 # vérifier si un agent est en quarantaine:
+
 isquarantined(agent::Agent)= agent.quarantined
 
 # vérifier si un agent peut se déplacer:
+
 ismoving(agent::Agent)= !isquarantined(agent)
 
 # Créations de fonctions qui permettent de sélectionner certains agents dans la poulation sur la base de leurs champs à l'aide des fonctions
@@ -282,43 +286,44 @@ Base.show(io::IO, ::MIME"text/plain", p::Population) = print(io, "Une population
 
 # Paramètres globaux de la simulation:
 
-tick = 0             # temps actuel de la simulation
-maxlength = 2000     # nombre maximal de générations
-budget = 21000        # budget total pour les tests et les vaccins
-distance = 25        # rayon de surveillance autour des agents morts
-test = 10            # nombre de simulations à réaliser
-taille = 3750        # nombre d'agents dans la population initiale
-contagion = 0.4      # probabilité de transmission par contact direct
+tick = 0             ## temps actuel de la simulation
+maxlength = 2000     ## nombre maximal de générations
+budget = 21000       ## budget total pour les tests et les vaccins
+distance = 25        ## rayon de surveillance autour des agents morts
+test = 10            ## nombre de simulations à réaliser
+taille = 3750        ## nombre d'agents dans la population initiale
+contagion = 0.4      ## probabilité de transmission par contact direct
 
 # Stockage des événements d'infection
+
 struct InfectionEvent
-    time::Int64         # moment de l'infection
-    from::UUIDs.UUID    # identifiant de l'agent infectieux
-    to::UUIDs.UUID      # identifiant de l'agent infecté
-    x::Int64            # coordonnée x de l'infection
-    y::Int64            # coordonnée y de l'infection
+    time::Int64         ## moment de l'infection
+    from::UUIDs.UUID    ## identifiant de l'agent infectieux
+    to::UUIDs.UUID      ## identifiant de l'agent infecté
+    x::Int64            ## coordonnée x de l'infection
+    y::Int64            ## coordonnée y de l'infection
 end
 
 # Stockage des événements de vaccination
+
 struct VaccinEvent
-    time::Int64         # moment de la vaccination
-    to::UUIDs.UUID      # identifiant de l'agent vacciné
-    x::Int64            # coordonnée x de la vaccination
-    y::Int64            # coordonnée y de la vaccination
+    time::Int64         ## moment de la vaccination
+    to::UUIDs.UUID      ## identifiant de l'agent vacciné
+    x::Int64            ## coordonnée x de la vaccination
+    y::Int64            ## coordonnée y de la vaccination
 end
 
 # Stockage des agents morts
+
 struct DeadAgent
-    time::Int64         # moment de la mort
-    to::UUIDs.UUID      # identifiant de l'agent mort
-    x::Int64            # coordonnée x de la mort
-    y::Int64            # coordonnée y de la mort
+    time::Int64         ## moment de la mort
+    to::UUIDs.UUID      ## identifiant de l'agent mort
+    x::Int64            ## coordonnée x de la mort
+    y::Int64            ## coordonnée y de la mort
 end
 dead = DeadAgent[]
 
 # ## Simulation
-
-#population = Population(L, taille)
 
 # Le nombre d'individus susceptibles, infecteux et remis seront suivis lors des générations
 
@@ -336,17 +341,20 @@ for i in 1:test
     
     ## On s'assure de remettre le conteur de génération, la population et le budget à leur valeur initiale entre chaque simulation
 
-    tick = 0            # temps actuel de la simulation
-    budget= 21000       # budget total pour les tests et les vaccins
+    tick = 0            ## temps actuel de la simulation
+    budget= 21000       ## budget total pour les tests et les vaccins
 
     ## génération de la population initiale
+
     population = Population(L, taille)
 
     ## sélection aléatoire d'un agent pour être le patient zéro
+
     rand(population).infectious = true
 
     ## Tableaux pour suivre l'évolution de la population
     ## S= susceptibles, I=infectieux, R=recovered
+
     S = zeros(Int64, maxlength);
     I = zeros(Int64, maxlength);
     R = zeros(Int64, maxlength);
@@ -354,6 +362,7 @@ for i in 1:test
     ## Même chose pour les différents énènements
 
     ## vecteurs permettant de stocker les événements de la simulation
+
     events = InfectionEvent[]
     eventsvaccin = VaccinEvent[]
     dead = DeadAgent[]
@@ -362,14 +371,17 @@ for i in 1:test
 
 
     ## Boucle principale de la simulation
+
     while (length(infectious(population)) != 0) & (tick < maxlength)
 
         ## Mise à jour du temps de la simulation
+
         global tick, population, budget, distance
         tick += 1
 
         ## Si un décès est observé, on place en surveillance
         ## tous les agents dans un rayon de distance autour du décès
+
         if !isempty(dead)  
         centre = dead[1] 
 
@@ -382,16 +394,19 @@ for i in 1:test
         end
 
         ## Déplacement des agents qui ne sont pas en quarantaine
+
         for agent in moving(population)
             move!(agent, L; torus=false)
         end    
 
         ## progression de la maladie chez les agents infectieux
+
         for agent in infectious(population)
             agent.clock -= 1                 ## la durée de vie de l'agent diminue
         end
 
         ## activation du vaccin après 2 jours
+
         for agent in vaccinated(population)
             if tick >= (agent.timevacc)+2
                 agent.infectious=false       ## l'agent n'est plus infectieux
@@ -400,6 +415,7 @@ for i in 1:test
         end
 
         ## fin de la quarantaine après 20 jours
+
         for agent in quarantined(population)
             if tick >= (centre.time)+20
                 agent.quarantined=false
@@ -408,7 +424,6 @@ for i in 1:test
 
         ## Les agents vaccinés ont une certaine chance d'infecter les agents sains non-vaccinés dans leur cellule
 
-    
         for agent in Random.shuffle(infectious(population))
             neighbors = healthy(incell(agent, population))
             for neighbor in neighbors
@@ -420,10 +435,12 @@ for i in 1:test
         end
         
         ## si un décès est observé, mise en place de la stratégie de vaccination
+
         if !isempty(dead) ## Si il y a un mort
    
         ## Parmis les agents qui sont à surveiller, si ceux-ci sont sains il y a 5% de chances de faux positif. Si le budget le permet, un test 
-        ## est fait. Si ce dernier indique que les agents doivent être vaccinés et que le budget le permet, ils le seront.  
+        ## est fait. Si ce dernier indique que les agents doivent être vaccinés et que le budget le permet, ils le seront.
+
             for agent in intersect(healthy(population), surveiller(population)) ## On ne peut pas utiliser && combiné avec "for agent in...", ça renvoit un code d'erreur
                 if budget >= 4
                     budget-=4
@@ -435,7 +452,8 @@ for i in 1:test
                             agent.timevacc=tick
                             budget-=17
 
-                            ## Vaccination des voisins dans la même cellule
+                            ## Vaccination des voisins dans la même 
+                            
                             neighbors = unvaccinated(incell(agent, population))
                             for neighbor in neighbors
                                 if budget >= 17
@@ -451,7 +469,8 @@ for i in 1:test
             end
         
         ## Parmis les agents qui sont à surveiller, si ceux-ci sont contagieux, il y a 5% de chances de faux négatif. Si le budget le permet,
-        ## un test est fait. Si ce dernier indique que les agents doivent être vaccinés et que le budget le permet, ils le seront.  
+        ## un test est fait. Si ce dernier indique que les agents doivent être vaccinés et que le budget le permet, ils le seront.
+
             for agent in intersect(infectious(population), surveiller(population))
                 if budget >= 4
                     budget-=4
@@ -477,6 +496,7 @@ for i in 1:test
         end
 
         ## Suppression des agents morts de la population
+
         for agent in population
             if agent.clock < 0
                 push!(dead, DeadAgent(tick, agent.id, agent.x, agent.y))
@@ -485,6 +505,7 @@ for i in 1:test
         end
 
         ## Stockage des tailles de population à chaque génération
+
         S[tick] = length(filter(isunvaccinated,healthy(population)))
         I[tick] = length(infectious(population))
         R[tick] = length(filter(isvaccinated,healthy(population)))
@@ -492,6 +513,7 @@ for i in 1:test
     end
 
     ## Stockage des résultats final de la simulation
+
     suivi[1, i] = length(population)
     suivi[2, i] = length(vaccinated(population))
     suivi[3, i] = budget
@@ -499,6 +521,7 @@ for i in 1:test
 end
 
 # Affichage des résultats globaux des simulations
+
 print(suivi)
 
 # # Résultat des simulations et discussion
@@ -509,6 +532,7 @@ print(suivi)
 
 # couper les séries temporelles au moment de la dernière génération
 # simulée pour éviter les valeurs inutiles
+
 S = S[1:tick];
 I = I[1:tick];
 R = R[1:tick];
@@ -526,26 +550,28 @@ current_figure()
 
 # ### Nombre de cas par individu infectieux
 
-# Analyser combien d'infections ont été causées par chaque agent infectieux
+# compter le nombre d'infections générées par chaque agent
 
-# comptage le nombre d'infections générées par chaque agent
 infxn_by_uuid = countmap([event.from for event in events]);
 
-# comptage de nombre de vaccination 
+# compter le nombre de vaccination
+
 vaccincount = countmap([event.to for event in eventsvaccin]);
 
 # La commande `countmap` renvoie un dictionnaire, qui associe chaque UUID au
 # nombre de fois ou il apparaît:
 
-length(infxn_by_uuid)            # nombre d'agents ayant causé au moins une infection
-length(vaccincount)              # nombre d'agents ayant été vaccinés
-length(population)               # taille finale de la population
-length(surveiller(population))   # nombre d'agents ayant été mis en surveillance
+length(infxn_by_uuid)            ## nombre d'agents ayant causé au moins une infection
+length(vaccincount)              ## nombre d'agents ayant été vaccinés
+length(population)               ## taille finale de la population
+length(surveiller(population))   ## nombre d'agents ayant été mis en surveillance
 
 # distribution du nombre d'infections causées par les agents infectieux:
+
 nb_inxfn = countmap(values(infxn_by_uuid))
 
 # visualidation de la distribution du nombre d'infections causées par les agents infectieux
+
 f = Figure()
 ax = Axis(f[1, 1]; xlabel="Nombre d'infections", ylabel="Nombre d'agents")
 scatterlines!(ax, [get(nb_inxfn, i, 0) for i in Base.OneTo(maximum(keys(nb_inxfn)))], color=:black)
@@ -555,10 +581,12 @@ f
 
 # analyse de la propagation spatiotemporelle des infections.
 # on extrait le temps et la position de chaque événement d'infection.
+
 t = [event.time for event in events];
 pos = [(event.x, event.y) for event in events];
 
-#visualisation de la propagation spatiotemporelle des infections
+# Visualisation de la propagation spatiotemporelle des infections
+
 f = Figure()
 ax = Axis(f[1, 1]; aspect=1, backgroundcolor=:grey97)
 hm = scatter!(ax, pos, color=t, colormap=:navia, strokecolor=:black, strokewidth=1, colorrange=(0, tick), markersize=6)
@@ -567,17 +595,21 @@ hidedecorations!(ax)
 current_figure()
 
 # # Figures supplémentaires
+
 # Visualisation des infections sur l'axe x
+
 scatter(t, first.(pos), color=:black, alpha=0.5)
 
 # et y
+
 scatter(t, last.(pos), color=:black, alpha=0.5)
 
 # ## Discussion
+
 # Les résultats obtenus montrent que la propagation de la maladie demeure très limitée dans
-# l'ensemble des simulations. Le nombre d'individus infectueux reste faible et l'épidémie ne 
+# l'ensemble des simulations. Le nombre d'individus infectieux reste faible et l'épidémie ne 
 # parvient pas à se développer de manière soutenue dans la population. Cette observation suggère
-# que la stratégie d'intervention mise en place, qui combine le dépistage ciblé, quarantine 
+# que la stratégie d'intervention mise en place, qui combine le dépistage ciblé, quarantaine 
 # locale et vaccination des contacts, est efficace pour contenir rapidement la propagation.
 
 # Cependant, cette interprétation doit être nuancée à la lumière des contraintes structurelles
@@ -598,20 +630,20 @@ scatter(t, last.(pos), color=:black, alpha=0.5)
 
 # L'analyse de la distribution du nombre d'infections par agent confirme cette dynamique. Très peu
 # d'agents contribuent à la transmission, et aucun phénomène de super-propagation n'est observé.
-# De plus, la visualisation spatiotemporelle des infections révèle uen concentration des cas autour
+# De plus, la visualisation spatiotemporelle des infections révèle une concentration des cas autour
 # du foyer initial, ce qui indique que la propagation reste localisée dans l'espace et dans le temps.
-# Ces observations s'inscrivent dan sla continuité des modèles épidémiques classiques, où la dynamique
+# Ces observations s'inscrivent dans la continuité des modèles épidémiques classiques, où la dynamique
 # de propagation dépend fortement des caractéristiques de transmission et contact @Kermack_McKendrick_1927.
 
 # Néanmoins, ces résultats ne permettent pas d'évaluer pleinement la performance relative de la 
 # stratégie proposée. En l'absence de simulations de comparaison, il est difficile de déterminer
-# dans quelle mesure la réduction de la propagation est effectivement dur aux mesures mises en place.
+# dans quelle mesure la réduction de la propagation est effectivement due aux mesures mises en place.
 # Il est donc possible que l'efficacité apparente de la stratégie soit surrestimée.
 
 # Par ailleurs, certains aspects simplifiés du modèle limitent la portée des conclusions. Par exemple,
 # l'utilisation de tests imparfaits, combinée à une contrainte de budget, influence directement les 
 # décisions d'intervention. Il est établi que la sensibilité des tests et leur fréquence d'utilisation
-# joue un rôle clé dans l controle des éoidémies @Larremore_et_al_2021. 
+# joue un rôle clé dans le controle des éoidémies @Larremore_et_al_2021.
 
 # En conclusion, cette étude suggère que, dans un contexte de transmission fortement localisée et
 # d'intervention précoce, une stratégie ciblée de dépistage et de vaccination peut suffire à contenir
@@ -621,11 +653,12 @@ scatter(t, last.(pos), color=:black, alpha=0.5)
 # évaluer de manière plus rigoureuse l'efficacité relative des interventions proposées.
 
 # ### Limitations du modèles
+
 # Ce modèle présente plusieurs limitates importantes:
 
-# La maladie est supposée être mortelle pour tous les agents infectés, et ils ont tous la
-# même durée d'infection, ce qui ne reflète pas la variabilité observée dans les populations 
-# réelles.
+# La maladie est supposée être mortelle pour tous les agents infectés, être transmise avec le même 
+# taux de contamination avoir la même durée d'infection chez tous les agents, ce qui ne reflète pas 
+# la variabilité observée dans les populations réelles.
 
 # De plus, le vaccin est considéré comme parfaitement efficace après un délai fixe de deux
 # jours, mais dans la réalité, l'efficacité des vaccins peut varier selon les systèmes
@@ -634,4 +667,3 @@ scatter(t, last.(pos), color=:black, alpha=0.5)
 # Enfin, le modèle ne permet pas d'accéder directement à la prévalence de la maladie, ce qui
 # impose une dépendance aux tests imparfaits et aux contraintes budgétaires. Cela peut influencer
 # les décisions d'intervention et limiter l'optimisation des stratégies.
-# # Références
