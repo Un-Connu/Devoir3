@@ -585,7 +585,7 @@ f
 t = [event.time for event in events];
 pos = [(event.x, event.y) for event in events];
 
-#visualisation de la propagation spatiotemporelle des infections
+# Visualisation de la propagation spatiotemporelle des infections
 
 f = Figure()
 ax = Axis(f[1, 1]; aspect=1, backgroundcolor=:grey97)
@@ -595,6 +595,7 @@ hidedecorations!(ax)
 current_figure()
 
 # # Figures supplémentaires
+
 # Visualisation des infections sur l'axe x
 
 scatter(t, first.(pos), color=:black, alpha=0.5)
