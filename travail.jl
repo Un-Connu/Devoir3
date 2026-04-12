@@ -629,10 +629,12 @@ scatter(t, last.(pos), color=:black, alpha=0.5)
 # Ces observations s'inscrivent dans la continuité des modèles épidémiques classiques, où la dynamique
 # de propagation dépend fortement des caractéristiques de transmission et contact @Kermack_McKendrick_1927.
 
-# Néanmoins, ces résultats ne permettent pas d'évaluer pleinement la performance relative de la 
-# stratégie proposée. En l'absence de simulations de comparaison, il est difficile de déterminer
-# dans quelle mesure la réduction de la propagation est effectivement due aux mesures mises en place.
-# Il est donc possible que l'efficacité apparente de la stratégie soit surrestimée.
+# Les différentes simulations réalisées montrent une variabilité des résultats. Bien que le caractère 
+# stochastique du modèle entraîne de légères différences entre les simulations, la dynamique globale
+# reste similaire dans tous les cas, avec une propagation faible et rapidement contenue. Cette cohérence
+# suggère que la stratégie d'intervention mise en place est robuste et efficace dans le cadre des conditions
+# imposées par le modèle. Toutefois, en l'absence de comparaison avec des scénarios alternatifs, il demeure
+# difficile de determiner si cette stratégie est réellement optimale.
 
 # Par ailleurs, certains aspects simplifiés du modèle limitent la portée des conclusions. Par exemple,
 # l'utilisation de tests imparfaits, combinée à une contrainte de budget, influence directement les 
