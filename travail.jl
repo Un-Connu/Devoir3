@@ -574,56 +574,64 @@ scatter(t, first.(pos), color=:black, alpha=0.5)
 scatter(t, last.(pos), color=:black, alpha=0.5)
 
 # ## Discussion
-# Les résultats obtenus montrent que la propagation de la maladie est restée très
-# limitée au cours de la simulation. En effet, le nombre d'individus infectieux
-# demeure extrêmement bas, ce qui indique que l'épidémie ne s'est pas réellement
-# développée dans la population.
-#
-# Cette faible propagation peut s'expliquer par la combinaison des paramètres du modèle et
-# des stratégies d'intervention mises en place. La transmission étant conditionnée par un
-# contact direct dans la même cellule, les interactions entre agents restent locale, ce qui
-# réduit les opportunités de contagion
-#
-# De plus, la stratégie de dépistage ciblée autour du premier décès semble jouer un rôle
-# important dans cette dynamique. En identifiant rapidement les agents à risque dans un
-# rayon donné, elle permet d'intervenir localement avant que la maladie ne se propage
-# davantage.
-#
-# La mise en quarantaine des agents dans le rayon de surveillance contribue également à limiter
-# les déplacements et contacts, ce qui reduit la transmission. Et la vaccination des agents 
-# testés positifs et leurs voisins immédiats renforce cette barrière locale en diminuant le nombre
-# d'agents susceptibles.
-#
-# Par ailleurs, l'analyse de la distribution du nombre d'infections par agent montre que très peu
-# d'agents contribue à la transmission, ce qui est cohérent avec l'absence de propagation significative. 
-# Contrairement à un scénario d'épidémie classique, on n'observe pas de super-propagation.
-#
-# La visualisation spatiotemporelle des infections révèle que les événements d'infection sont concentrés 
-# autour du foyer initial, donc localisés. Cela valide en partie l'hypothèse que la stratégie de dépistage
-# ciblée autour du premier décès est efficace pour limiter la propagation à l'échelle locale.
-#
-# Cependant, il est important de noter que ces résultats sont spécifiques aux paramètres choisis pour la
-# simulation. La tres faible propagation observée limite la capacité à évaluer pleinement l'efficacité de
-# la stratégie d'intervention. 
-#
-# Enfin, la contraite budgétaire joue un rôle crucial dans la dynamique observée. Bien que le budget soit
-# suffisant dans ce scénario pour permettre des interventions ciblées, une situation avec une propagation 
-# plus importante aurait pu mettre en évidence des limitations plus importantes dans les ressources disponibles.
-#
-# En conclusion, les résultats suggèrent que la stratégie combinant dépistage ciblé, quarantaine locale et vaccination 
-# des contacts immédiats est efficace pour contenir une propagation limitée de la maladie. Toutefois, des simulations 
-# avec des conditions favorisant une transmission plus importante seraient nécessaires pour évaluer pleinement la 
-# robustesse de cette stratégie.
+# Les résultats obtenus montrent que la propagation de la maladie demeure très limitée dans
+# l'ensemble des simulations. Le nombre d'individus infectueux reste faible et l'épidémie ne 
+# parvient pas à se développer de manière soutenue dans la population. Cette observation suggère
+# que la stratégie d'intervention mise en place, qui combine le dépistage ciblé, quarantine 
+# locale et vaccination des contacts, est efficace pour contenir rapidement la propagation.
+
+# Cependant, cette interprétation doit être nuancée à la lumière des contraintes structurelles
+# du modèle. En effet, la transmission repose exclusivement sur un contact direct entre agents
+# occupant la même cellule, tandis que les déplacements sont limités à des mouvements locaux.
+# Cette combinaison réduit fortement le nombre de contacts potentiels entre individus et limite
+# intrinsèquement la diffusion du pathogène, comme montré dans les études sur les réseaux de 
+# contacts où la structure des interactions influence fortement la propagation des maladies 
+# @Keeling_Eames_2005. Ainsi, la faible propagation observée pourrait être en grande partie 
+# attribuable aux caractéristiques du modèle plutôt qu'à l'efficacité de la stratégie d'intervention.
+
+# De plus, l'intervention est déclenchée dès le premier décès, ce qui correspond à une réponse 
+# extrêmement précoce dans la dynamique épidémique. Cette détection rapide, combinée à la mise 
+# en quarantaine immédiate des agents dans un rayon de 25 unités, contribue à contenir localement
+# l'infection avant qu'elle ne puisse se propager à plus grande échelle. Ce résultat est cohérent
+# avec les travaux montrant que des interventions précoces, telles que l'isolement des cas et le 
+# traçage des contacts, peuvent suffir à contrôler les épidémies à ses débuts @Hallewell_et_al_2020.
+
+# L'analyse de la distribution du nombre d'infections par agent confirme cette dynamique. Très peu
+# d'agents contribuent à la transmission, et aucun phénomène de super-propagation n'est observé.
+# De plus, la visualisation spatiotemporelle des infections révèle uen concentration des cas autour
+# du foyer initial, ce qui indique que la propagation reste localisée dans l'espace et dans le temps.
+# Ces observations s'inscrivent dan sla continuité des modèles épidémiques classiques, où la dynamique
+# de propagation dépend fortement des caractéristiques de transmission et contact @Kermack_McKendrick_1927.
+
+# Néanmoins, ces résultats ne permettent pas d'évaluer pleinement la performance relative de la 
+# stratégie proposée. En l'absence de simulations de comparaison, il est difficile de déterminer
+# dans quelle mesure la réduction de la propagation est effectivement dur aux mesures mises en place.
+# Il est donc possible que l'efficacité apparente de la stratégie soit surrestimée.
+
+# Par ailleurs, certains aspects simplifiés du modèle limitent la portée des conclusions. Par exemple,
+# l'utilisation de tests imparfaits, combinée à une contrainte de budget, influence directement les 
+# décisions d'intervention. Il est établi que la sensibilité des tests et leur fréquence d'utilisation
+# joue un rôle clé dans l controle des éoidémies @Larremore_et_al_2021. 
+
+# En conclusion, cette étude suggère que, dans un contexte de transmission fortement localisée et
+# d'intervention précoce, une stratégie ciblée de dépistage et de vaccination peut suffire à contenir
+# efficacement une épidémie. Toutefois, la robustesse de cette conclusion reste limitée par les
+# caractéristiques structurelles du modèle. Des simulations complémentaires, intégrant des conditions
+# favorisant une transmission plus étendue ou des stratégies altérnatives, seraient nécessaires pour 
+# évaluer de manière plus rigoureuse l'efficacité relative des interventions proposées.
 
 # ### Limitations du modèles
-# Ce modèle présente plusieurs limitates importantes. Tout d'abord, la transmission de la
-# maladie est simplifiée, car elle dépend uniquement du contact direct entre agents situés
-# dans la même cellule. En réalité, les interactions sociales sont plus complexes et ne sont
-# pas strictement locales.
+# Ce modèle présente plusieurs limitates importantes:
+
+# La maladie est supposée être mortelle pour tous les agents infectés, et ils ont tous la
+# même durée d'infection, ce qui ne reflète pas la variabilité observée dans les populations 
+# réelles.
 
 # De plus, le vaccin est considéré comme parfaitement efficace après un délai fixe de deux
-# jours, ce qui ne reflète pas la variabilité réelle de la réponse immunitaire entre individus.
+# jours, mais dans la réalité, l'efficacité des vaccins peut varier selon les systèmes
+# immunitaires individuels et les caractéristiques du pathogène.
 
-# Le modèle suppose également une durée d'infection fixe pour tous les agents, alors que dans
-# la réalité, cette durée peut varier selon les individus.
+# Enfin, le modèle ne permet pas d'accéder directement à la prévalence de la maladie, ce qui
+# impose une dépendance aux tests imparfaits et aux contraintes budgétaires. Cela peut influencer
+# les décisions d'intervention et limiter l'optimisation des stratégies.
 # # Références
