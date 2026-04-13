@@ -424,7 +424,7 @@ for i in 1:test
             end
         end
 
-        ## Les agents vaccinés ont une certaine chance d'infecter les agents sains non-vaccinés dans leur cellule
+        ## Les agents non-vaccinés ont une certaine chance d'infecter les agents sains non-vaccinés dans leur cellule
 
         for agent in Random.shuffle(infectious(population))
             neighbors = healthy(incell(agent, population))
@@ -454,7 +454,7 @@ for i in 1:test
                             agent.timevacc=tick
                             budget-=17
 
-                            ## Vaccination des voisins dans la même 
+                            ## Vaccination des voisins dans la même cellule
                             
                             neighbors = unvaccinated(incell(agent, population))
                             for neighbor in neighbors
@@ -483,6 +483,9 @@ for i in 1:test
                             push!(eventsvaccin, VaccinEvent(tick, agent.id, agent.x, agent.y))
                             agent.timevacc=tick
                             budget-=17
+
+                            ## Vaccination des agents dans la même cellule
+
                             neighbors = unvaccinated(incell(agent, population))
                             for neighbor in neighbors
                                 neighbor.vaccinated = true
@@ -515,7 +518,7 @@ for i in 1:test
     end
 
     ## Stockage des résultats final de la simulation
-
+    
     suivi[1, i] = length(population)
     suivi[2, i] = length(vaccinated(population))
     suivi[3, i] = budget
