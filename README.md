@@ -13,11 +13,7 @@ Le modèle intègre également une stratégie d’intervention avec dépistage, 
 L’objectif de la simulation est d’évaluer quelle stratégie de dépistage et de vaccination permet de minimiser la mortalité sous contraintes budgétaires.
 
 ## Répartition du travail
-Félix De Carufel
-Contribution principale au code de simulation et à son explication.
-Younes Benbezza
-Contribution principale au code de simulation et à son explication.
-Ifaliana Ranaivo Rajaonoarisoa
-Rédaction de l’introduction et du README.
-Kazem
-Documentation des fonctions et rédaction de la section résultats.
+- Félix De Carufel : Contribution principale au code de simulation et à son explication.
+- Younes Benbezza : Contribution principale au code de simulation et à son explication.
+- Ifaliana Ranaivo Rajaonoarisoa : Rédaction de l’introduction et du README.
+- Kazem Mouchaimech : Documentation des fonctions et rédaction de la section résultats.
