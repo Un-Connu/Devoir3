@@ -47,7 +47,7 @@
 # Le vaccin étant parfaitement efficace, nous pourrons mesurer l'efficacité de la
 # stratégie sans considérer les variabilités. Le délai de deux jours avant activation
 # reflète le temps nécessaire à la réponse immunitaire adaptative.
-# Efin, les interventions sont limitées par un budget de 21000$, avec des coûts
+# Enfin, les interventions sont limitées par un budget de 21000$, avec des coûts
 # différents pour les tests et la vaccination. Cette contrainte introduit un 
 # compromis entre dépistage et prévention, reflétant les limitations réelles des
 # systèmes de santé. L’impossibilité de connaître la prévalence sans tests simule 
@@ -62,24 +62,23 @@
 # ## Hypothèse et résultats attendus
 
 # Nous faisons l’hypothèse qu’une stratégie de dépistage et de vaccination ciblée autour
-# du premier décès, avec un rayon progressivement élargi, permettra de réduire 
+# du premier décès, avec un rayon défini, permettra de réduire 
 # efficacement la mortalité tout en optimisant l'utilisation du budget. De plus, nous supposons 
-# aussi que la mise en quarantaine de tous les individus dans l’anneau limitera 
+# aussi que la mise en quarantaine de tous les individus dans ce cercle limitera 
 # la propagation, avec une durée réduite pour les vaccinés. De plus, vacciner immédiatement les voisins
 # directs d’un cas détecté devrait freiner la transmission locale.
 
 # En gros, la stratégie consiste à tester les individus situés dans un cercle autour du premier décès. 
 # Si un individu est détecté positif, ses voisins immédiats sont vaccinés. Tous les individus dans l’anneau 
-# sont également placés en quarantaine, indépendamment de leur statut. Le rayon du cercle est progressivement 
-# augmenté afin d’élargir la zone d’intervention.
+# sont également placés en quarantaine, indépendamment de leur statut.
 
 # ## Description du modèle
 
-# Nous utilisons un modèle basé sur des agents implémenté en Julia @Eubank_2004 , où chaque
+# Nous utilisons un modèle basé sur des agents implémentés en Julia @Eubank_2004 , où chaque
 # individu est représenté par une structure `Agent` contenant sa position,
 # son état d’infection, son statut vaccinal et un compteur de survie.
 
-# Les agents évoluent dans une lattice bidimensionnelle (-50, 50) et se déplacent
+# Les agents évoluent dans une lattice bidimensionnelle (-50, 50 x -50, 50) et se déplacent
 # aléatoirement à chaque pas de temps. La transmission se produit lorsqu’un agent
 # infectieux partage la même cellule qu’un agent susceptible, avec une probabilité
 # de 0.4.
@@ -170,7 +169,7 @@ Random.rand(::Type{Agent}, L::Landscape, n::Int64) = [rand(Agent, L) for _ in 1:
 """
     move!(A::Agent, L::Landscape; torus=true)
 
-Déplace un agent d'une case aléatoire dans le paysage.
+Déplace un agent d'une case adjacente aléatoirement dans le paysage.
 
 Si `torus=true`, les bords du paysage sont connectés, créant un effet de tore:
 un agent qui sort d'un côté réapparaît de l'autre côté.
@@ -247,7 +246,7 @@ ismoving(agent::Agent)= !isquarantined(agent);
 
 const Population = Vector{Agent};
 
-# Fonctions permettant de filtrer les agents d'une population selon leur état
+# Fonctions permettant de filtrer les agents d'une population selon leur état.
 # Chaque fonction retourne un sous-ensemble de la population contenant uniquement
 # les agents qui satisfont la condition:
 
@@ -555,19 +554,19 @@ current_figure()
 
 # ### Nombre de cas par individu infectieux
 
-# compter le nombre d'infections générées par chaque agent
+# Compter le nombre d'infections générées par chaque agent
 
 infxn_by_uuid = countmap([event.from for event in events]);
 
-# compter le nombre de vaccination
+# Compter le nombre de vaccination
 
 vaccincount = countmap([event.to for event in eventsvaccin]); ## La commande `countmap` renvoie un dictionnaire, qui associe chaque UUID au nombre de fois ou il apparaît:
 
-# distribution du nombre d'infections causées par les agents infectieux:
+# Distribution du nombre d'infections causées par les agents infectieux:
 
 nb_inxfn = countmap(values(infxn_by_uuid));
 
-# visualidation de la distribution du nombre d'infections causées par les agents infectieux
+# Visualisation de la distribution du nombre d'infections causées par les agents infectieux
 
 f = Figure()
 ax = Axis(f[1, 1]; xlabel="Nombre d'infections", ylabel="Nombre d'agents")
@@ -576,8 +575,8 @@ f
 
 # ### Hotspots
 
-# analyse de la propagation spatiotemporelle des infections.
-# on extrait le temps et la position de chaque événement d'infection.
+# Analyse de la propagation spatiotemporelle des infections.
+# On extrait le temps et la position de chaque événement d'infection.
 
 t = [event.time for event in events];
 pos = [(event.x, event.y) for event in events];
@@ -606,8 +605,8 @@ scatter(t, last.(pos), color=:black, alpha=0.5)
 # Les résultats obtenus montrent que la propagation de la maladie demeure très limitée dans
 # l'ensemble des simulations. Le nombre d'individus infectieux reste faible et l'épidémie ne 
 # parvient pas à se développer de manière soutenue dans la population. Cette observation suggère
-# que la stratégie d'intervention mise en place, qui combine le dépistage ciblé, quarantaine 
-# locale et vaccination des contacts, est efficace pour contenir rapidement la propagation.
+# que la stratégie d'intervention mise en place, qui combine le dépistage ciblé, la quarantaine 
+# locale et la vaccination des agents en contacts, est efficace pour contenir rapidement la propagation.
 
 # Cependant, cette interprétation doit être nuancée à la lumière des contraintes structurelles
 # du modèle. En effet, la transmission repose exclusivement sur un contact direct entre agents
@@ -623,40 +622,41 @@ scatter(t, last.(pos), color=:black, alpha=0.5)
 # en quarantaine immédiate des agents dans un rayon de 25 unités, contribue à contenir localement
 # l'infection avant qu'elle ne puisse se propager à plus grande échelle. Ce résultat est cohérent
 # avec les travaux montrant que des interventions précoces, telles que l'isolement des cas et le 
-# traçage des contacts, peuvent suffir à contrôler les épidémies à ses débuts @Hallewell_et_al_2020.
+# traçage des contacts, peuvent suffirs à contrôler les épidémies à ses débuts @Hallewell_et_al_2020.
 
 # L'analyse de la distribution du nombre d'infections par agent confirme cette dynamique. Très peu
 # d'agents contribuent à la transmission, et aucun phénomène de super-propagation n'est observé.
 # De plus, la visualisation spatiotemporelle des infections révèle une concentration des cas autour
 # du foyer initial, ce qui indique que la propagation reste localisée dans l'espace et dans le temps.
 # Ces observations s'inscrivent dans la continuité des modèles épidémiques classiques, où la dynamique
-# de propagation dépend fortement des caractéristiques de transmission et contact @Kermack_McKendrick_1927.
+# de propagation dépend fortement des caractéristiques de transmission et contacts @Kermack_McKendrick_1927.
 
-# Les différentes simulations réalisées montrent une variabilité des résultats. Bien que le caractère 
+# Les différentes simulations réalisées montrent une faible variabilité dans les résultats. Bien que le caractère 
 # stochastique du modèle entraîne de légères différences entre les simulations, la dynamique globale
 # reste similaire dans tous les cas, avec une propagation faible et rapidement contenue. Cette cohérence
 # suggère que la stratégie d'intervention mise en place est robuste et efficace dans le cadre des conditions
 # imposées par le modèle. Toutefois, en l'absence de comparaison avec des scénarios alternatifs, il demeure
 # difficile de determiner si cette stratégie est réellement optimale.
 
-# Par ailleurs, certains aspects simplifiés du modèle limitent la portée des conclusions. Par exemple,
-# l'utilisation de tests imparfaits, combinée à une contrainte de budget, influence directement les 
-# décisions d'intervention. Il est établi que la sensibilité des tests et leur fréquence d'utilisation
-# joue un rôle clé dans le controle des éoidémies @Larremore_et_al_2021.
+# Par ailleurs, certains aspects du modèle limitent la portée des conclusions. Par exemple,
+# l'utilisation de tests imparfaits combinée à une contrainte de budget, qui peuvent touts les deux
+# grandement varier in situ, influence directement les décisions d'interventions. Il est établi que la 
+# sensibilité des tests et leur fréquence d'utilisation joue un rôle clé dans le contrôle des 
+# épidémies @Larremore_et_al_2021.
 
 # En conclusion, cette étude suggère que, dans un contexte de transmission fortement localisée et
 # d'intervention précoce, une stratégie ciblée de dépistage et de vaccination peut suffire à contenir
 # efficacement une épidémie. Toutefois, la robustesse de cette conclusion reste limitée par les
 # caractéristiques structurelles du modèle. Des simulations complémentaires, intégrant des conditions
 # favorisant une transmission plus étendue ou des stratégies altérnatives, seraient nécessaires pour 
-# évaluer de manière plus rigoureuse l'efficacité relative des interventions proposées.
+# évaluer de manière plus rigoureuse l'efficacité relative de l'intervention proposée.
 
 # ### Limitations du modèles
 
 # Ce modèle présente plusieurs limitates importantes:
 
 # La maladie est supposée être mortelle pour tous les agents infectés, être transmise avec le même 
-# taux de contamination avoir la même durée d'infection chez tous les agents, ce qui ne reflète pas 
+# taux de contamination et avoir la même durée d'infection chez tous les agents. Cela ne reflète pas 
 # la variabilité observée dans les populations réelles.
 
 # De plus, le vaccin est considéré comme parfaitement efficace après un délai fixe de deux
